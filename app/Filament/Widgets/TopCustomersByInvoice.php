@@ -16,7 +16,7 @@ class TopCustomersByInvoice extends ChartWidget
             ->join('outlet_dealers', 'sales_orders.customer_id', '=', 'outlet_dealers.outlet_code')
             ->select('outlet_dealers.outlet_name', DB::raw('SUM(transaction.total_amount) as total'))
             ->groupBy('outlet_dealers.outlet_name')
-            ->orderByDesc('total')
+            ->orderByDesc('total') 
             ->limit(5)
             ->get();
 
