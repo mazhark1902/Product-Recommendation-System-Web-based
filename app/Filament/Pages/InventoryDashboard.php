@@ -21,7 +21,7 @@ class InventoryDashboard extends Page
         return [
             AfterSalesKpiWidget::class,
             StockAvailabilityWidget::class,
-            // DashboardOverview::class,
+            DashboardOverview::class,
             // RevenueLineChart::class,
             // SalesChart::class, 
  ];
