@@ -6,6 +6,8 @@ use Filament\Pages\Page;
 use App\Filament\Widgets\RevenueLineChart;
 use App\Filament\Widgets\DashboardOverview;
 use App\Filament\Widgets\SalesChart;
+use App\Filament\Widgets\Inventory\AfterSalesKpiWidget;
+use App\Filament\Widgets\Inventory\StockAvailabilityWidget;
 
 class InventoryDashboard extends Page
 {
@@ -17,9 +19,11 @@ class InventoryDashboard extends Page
     public function getHeaderWidgets(): array
     {
         return [
-            DashboardOverview::class,
-            RevenueLineChart::class,
-            SalesChart::class, 
+            AfterSalesKpiWidget::class,
+            StockAvailabilityWidget::class,
+            // DashboardOverview::class,
+            // RevenueLineChart::class,
+            // SalesChart::class, 
  ];
     } 
 }
