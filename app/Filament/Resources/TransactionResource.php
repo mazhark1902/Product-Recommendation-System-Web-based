@@ -15,6 +15,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Actions\Action;
 use Illuminate\Support\Facades\Mail;
+// use App\Services\GmailClient;
+// use Filament\Notifications\Notification;
 
 class TransactionResource extends Resource
 {
@@ -62,10 +64,9 @@ class TransactionResource extends Resource
                 
                         // Update status_reminder
                         $record->update(['status_reminder' => 'has been sent']);
-                    })
+                    })           
                     ->requiresConfirmation()
-                    ->color('primary')
-                
+                    ->color('primary'),
             ]);
     }
 
