@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 
 class TopCustomerBarChart extends ChartWidget
 {
-    protected static ?string $heading = 'Top 12 Dealers by Revenue';
+    protected static ?string $heading = 'Top 10 Dealers by Revenue';
 
     protected function getData(): array
     {
@@ -16,7 +16,7 @@ class TopCustomerBarChart extends ChartWidget
             ->select('outlet_dealers.outlet_name', DB::raw('SUM(sales_orders.total_amount) as total_revenue'))
             ->groupBy('outlet_dealers.outlet_name')
             ->orderByDesc('total_revenue')
-            ->limit(12)
+            ->limit(10)
             ->get();
         return [
             'datasets' => [
