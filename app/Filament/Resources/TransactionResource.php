@@ -15,8 +15,6 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Actions\Action;
 use Illuminate\Support\Facades\Mail;
-// use App\Services\GmailClient;
-// use Filament\Notifications\Notification;
 
 class TransactionResource extends Resource
 {
@@ -38,35 +36,19 @@ class TransactionResource extends Resource
             ->actions([
                 Action::make('View Detail')
                     ->url(fn (Transaction $record) => TransactionResource::getUrl('view', ['record' => $record])),
-                    Action::make('reminder_dealer')
-                    ->label('Reminder Dealer')
-                    ->action(function (Transaction $record) {
-                        // Pastikan relasi salesOrder, outlet, dan dealer ada
-                        $salesOrder = $record->salesOrder;
-                        if (!$salesOrder || !$salesOrder->outlet || !$salesOrder->dealer) {
-                            throw new \Exception('Outlet or Dealer information is missing for this transaction.');
-                        }
-                
-                        $outletEmail = $salesOrder->outlet->email;
-                        $dealerEmail = $salesOrder->dealer->email;
-                
-                        // Kirim email ke outlet
-                        Mail::send('emails.reminder', ['transaction' => $record], function ($message) use ($outletEmail, $record) {
-                            $message->to($outletEmail)
-                                ->subject("NO {$record->invoice_id}_Outlet Reminder");
-                        });
-                
-                        // Kirim email ke dealer
-                        Mail::send('emails.reminder', ['transaction' => $record], function ($message) use ($dealerEmail, $record) {
-                            $message->to($dealerEmail)
-                                ->subject("NO {$record->invoice_id}_Dealer Reminder");
-                        });
-                
-                        // Update status_reminder
-                        $record->update(['status_reminder' => 'has been sent']);
-                    })           
+                Action::make('email_payment')
+                    ->label('Email & Payment')
+                    ->icon('heroicon-o-envelope')
+                    ->color('secondary')
+                    ->url(fn (Transaction $record) => TransactionResource::getUrl('email-payment', ['record' => $record]))
+                    ->openUrlInNewTab()
+
+                        
                     ->requiresConfirmation()
                     ->color('primary'),
+                    
+                    
+                
             ]);
     }
 
@@ -75,6 +57,7 @@ class TransactionResource extends Resource
         return [
             'index' => Pages\ListTransactions::route('/'),
             'view' => Pages\ViewTransaction::route('/{record}'),
+            'email-payment' => Pages\EmailAndPayment::route('/{record}/email-payment'),
         ];
     }
 }
