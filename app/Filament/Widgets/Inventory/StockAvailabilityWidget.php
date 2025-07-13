@@ -21,6 +21,10 @@ class StockAvailabilityWidget extends BaseWidget
         $stockTotals = DB::table($inventoryTable)
             ->selectRaw('SUM(quantity_available) as total_available, SUM(quantity_reserved) as total_reserved')
             ->first();
+        
+        $totalValue = Inventory::query()
+            ->join('sub_parts', 'inventory.product_id', '=', 'sub_parts.sub_part_number')
+            ->sum(DB::raw('inventory.quantity_available * sub_parts.price'));
 
         // Mengambil nilai dari hasil query
         $availableStock = $stockTotals->total_available ?? 0;
@@ -30,6 +34,10 @@ class StockAvailabilityWidget extends BaseWidget
         $freeStock = $availableStock - $reservedStock;
 
         return [
+            Stat::make('Total Nilai Inventaris', 'Rp ' . number_format($totalValue, 2))
+                ->description('Nilai total dari semua stok yang tersedia')
+                ->color('success'),
+
             Stat::make('Stok Tersedia (On Hand)', number_format($availableStock))
                 ->description('Total stok fisik yang tercatat di semua gudang.')
                 ->color('primary'),

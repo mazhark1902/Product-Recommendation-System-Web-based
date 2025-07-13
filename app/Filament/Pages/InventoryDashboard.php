@@ -3,11 +3,13 @@
 namespace App\Filament\Pages;
 
 use Filament\Pages\Page;
-use App\Filament\Widgets\RevenueLineChart;
-use App\Filament\Widgets\DashboardOverview;
-use App\Filament\Widgets\SalesChart;
 use App\Filament\Widgets\Inventory\AfterSalesKpiWidget;
+use App\Filament\Widgets\Inventory\DeadStockTable;
 use App\Filament\Widgets\Inventory\StockAvailabilityWidget;
+use App\Filament\Widgets\Inventory\SlowMovingItemsChart;
+use App\Filament\Widgets\Inventory\MostReturnedProductsChart;
+use App\Filament\Widgets\Inventory\FastMovingItemsChart;
+use App\Filament\Widgets\Inventory\PendingShipmentsTable;
 
 class InventoryDashboard extends Page
 {
@@ -19,11 +21,14 @@ class InventoryDashboard extends Page
     public function getHeaderWidgets(): array
     {
         return [
-            AfterSalesKpiWidget::class,
             StockAvailabilityWidget::class,
-            DashboardOverview::class,
-            // RevenueLineChart::class,
-            // SalesChart::class, 
+            AfterSalesKpiWidget::class,
+            DeadStockTable::class,
+            SlowMovingItemsChart::class,
+            MostReturnedProductsChart::class,
+            // FastMovingItemsChart::class,
+            PendingShipmentsTable::class,
+            
  ];
     } 
 }
