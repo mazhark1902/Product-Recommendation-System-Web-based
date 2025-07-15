@@ -18,4 +18,14 @@ class DeliveryItem extends Model
     {
         return $this->belongsTo(DeliveryOrder::class, 'delivery_order_id', 'delivery_order_id');
     }
+
+    // --- TAMBAHKAN FUNGSI RELASI INI ---
+    /**
+     * Mendapatkan data SubPart yang terkait dengan item pengiriman ini.
+     */
+    public function part()
+    {
+        return $this->belongsTo(SubPart::class, 'part_number', 'sub_part_number');
+    }
+    // -------------------------------------
 }
