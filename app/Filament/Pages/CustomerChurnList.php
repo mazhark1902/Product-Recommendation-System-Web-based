@@ -10,9 +10,6 @@ use App\Filament\Widgets\churnriskchart;
 use App\Filament\Widgets\CustomerChurnStats;
 
 
-
-
-
 class CustomerChurnList extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-s-arrow-left-start-on-rectangle';

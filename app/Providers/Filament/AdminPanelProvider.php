@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use Filament\Facades\Filament;
+use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Http\Responses\Auth\Contracts\LoginResponse;
 use Illuminate\Support\ServiceProvider; 
 use Filament\Http\Middleware\Authenticate;
@@ -71,6 +72,7 @@ class AdminPanelProvider extends PanelProvider
             ])
 
             ->plugins([
+                
                 // ... other plugins
                 ResizedColumnPlugin::make()
                     ->preserveOnDB() // Enable database storage (optional)

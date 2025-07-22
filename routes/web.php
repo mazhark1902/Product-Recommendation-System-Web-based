@@ -3,8 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Password;
 
-// Auth::routes(); // Ini akan auto-include semua route untuk login, register, reset password, dll
+// Redirect root URL to /admin
+Route::redirect('/', '/admin');
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// Tambahkan route lain jika perlu
