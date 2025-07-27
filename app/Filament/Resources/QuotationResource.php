@@ -21,10 +21,13 @@ use App\Filament\Resources\QuotationResource\Pages\ViewDetailQuotation;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\TernaryFilter;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
+use BezhanSalleh\FilamentShield\Traits\HasShieldFormComponents;
 
 
 class QuotationResource extends Resource
 {
+    use HasShieldFormComponents;
     protected static ?string $model = Quotation::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';

@@ -14,9 +14,12 @@ use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\TextInput;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\TextColumn;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
+use BezhanSalleh\FilamentShield\Traits\HasShieldFormComponents;
 
 class UserResource extends Resource
 {
+    use HasShieldFormComponents;
     protected static ?string $model = User::class;
 
     protected static ?string $navigationIcon = 'heroicon-s-users';
@@ -29,11 +32,11 @@ class UserResource extends Resource
                 TextInput::make('name')->required(),
                 TextInput::make('email')->email(),
                 TextInput::make('password')->password()->visibleOn('create'),
-                // Forms\Components\Select::make('roles')
-                // ->relationship('roles', 'name')
-                // ->multiple()
-                // ->preload()
-                // ->searchable(),
+                Forms\Components\Select::make('roles')
+                ->relationship('roles', 'name')
+                ->multiple()
+                ->preload()
+                ->searchable(),
             ]);
     }
 

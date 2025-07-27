@@ -15,9 +15,12 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Actions\Action;
 use Illuminate\Support\Facades\Mail;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
+use BezhanSalleh\FilamentShield\Traits\HasShieldFormComponents;
 
 class TransactionResource extends Resource
 {
+    use HasShieldFormComponents;
     protected static ?string $model = Transaction::class;
     protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
     public static ?string $navigationGroup = 'Sales';

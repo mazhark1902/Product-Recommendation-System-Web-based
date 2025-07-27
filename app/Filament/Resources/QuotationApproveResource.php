@@ -13,9 +13,12 @@ use Filament\Tables\Columns\TextColumn;
 use App\Filament\Resources\QuotationApproveResource\Pages;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Columns\BadgeColumn;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
+use BezhanSalleh\FilamentShield\Traits\HasShieldFormComponents;
 
 class QuotationApproveResource extends Resource
 {
+    use HasShieldFormComponents;
     protected static ?string $model = Quotation::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-document-check';

@@ -10,10 +10,13 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Support\Str; // For generating unique sub_part_number if needed
+use Illuminate\Support\Str;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
+use BezhanSalleh\FilamentShield\Traits\HasShieldFormComponents; // For generating unique sub_part_number if needed
 
 class SubPartResource extends Resource
 {
+    use HasShieldFormComponents;
     protected static ?string $model = SubPart::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-queue-list'; // Changed for distinction

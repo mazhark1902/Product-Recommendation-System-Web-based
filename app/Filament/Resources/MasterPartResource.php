@@ -13,9 +13,12 @@ use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Filters\Filter;
 use Filament\Forms\Components\Placeholder;
 use Illuminate\Support\Str;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
+use BezhanSalleh\FilamentShield\Traits\HasShieldFormComponents;
 
 class MasterPartResource extends Resource
 {
+    use HasShieldFormComponents;
     protected static ?string $model = MasterPart::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';

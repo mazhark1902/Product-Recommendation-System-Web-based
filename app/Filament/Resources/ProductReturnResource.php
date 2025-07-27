@@ -16,9 +16,12 @@ use Filament\Tables\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
+use BezhanSalleh\FilamentShield\Traits\HasShieldFormComponents;
 
 class ProductReturnResource extends Resource
 {
+    use HasShieldFormComponents;
     protected static ?string $model = ProductReturn::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-arrow-uturn-left';

@@ -8,9 +8,12 @@ use Filament\Resources\Resource;
 use Filament\Tables\Table;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
+use BezhanSalleh\FilamentShield\Traits\HasShieldFormComponents;
 
 class DeliveryOrderResource extends Resource
 {
+    use HasShieldFormComponents;
     protected static ?string $model = DeliveryOrder::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-truck';

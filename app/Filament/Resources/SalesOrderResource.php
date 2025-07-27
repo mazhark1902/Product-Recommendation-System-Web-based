@@ -10,9 +10,12 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Actions\Action;
 use Illuminate\Database\Eloquent\Builder;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
+use BezhanSalleh\FilamentShield\Traits\HasShieldFormComponents;
 
 class SalesOrderResource extends Resource
 {
+    use HasShieldFormComponents;
     protected static ?string $model = SalesOrder::class;
     public static ?string $navigationGroup = 'Sales';
 

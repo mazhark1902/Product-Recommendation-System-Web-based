@@ -14,9 +14,12 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
+use BezhanSalleh\FilamentShield\Traits\HasShieldFormComponents;
 
 class DealerResource extends Resource
 {
+    use HasShieldFormComponents;
     protected static ?string $model = Dealer::class;
     public static ?string $navigationGroup = 'Customer Analysis';
     protected static ?string $navigationIcon = 'heroicon-s-building-office-2';

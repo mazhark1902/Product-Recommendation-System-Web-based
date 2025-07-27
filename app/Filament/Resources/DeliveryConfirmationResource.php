@@ -21,9 +21,12 @@ use Filament\Infolists\Infolist;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\RepeatableEntry;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
+use BezhanSalleh\FilamentShield\Traits\HasShieldFormComponents;
 
 class DeliveryConfirmationResource extends Resource
 {
+    use HasShieldFormComponents;
     protected static ?string $model = DeliveryOrder::class;
 
     // --- Pengaturan Navigasi & Label ---
