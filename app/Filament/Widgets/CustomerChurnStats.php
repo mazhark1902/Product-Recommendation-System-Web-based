@@ -6,9 +6,11 @@ use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 
 class CustomerChurnStats extends BaseWidget
 {
+    use HasWidgetShield;
     protected function getStats(): array
     {
         $today = Carbon::today();

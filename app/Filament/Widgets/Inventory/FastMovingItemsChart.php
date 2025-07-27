@@ -5,9 +5,11 @@ namespace App\Filament\Widgets\Inventory;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 
 class FastMovingItemsChart extends ChartWidget
 {
+    use HasWidgetShield;
     protected static ?string $heading = 'Top 5 Fast-Moving Items (Last 30 Days)';
     protected static ?int $sort = 6;
     protected int | string | array $columnSpan = 'full';

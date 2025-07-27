@@ -4,9 +4,11 @@ namespace App\Filament\Widgets;
 
 use Illuminate\Support\Facades\DB;
 use Filament\Widgets\ChartWidget;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 
 class SparePartCustomerSpread extends ChartWidget
 {
+    use HasWidgetShield;
     protected static ?string $heading = 'Customer Spread per Spare Part';
 
     protected function getData(): array

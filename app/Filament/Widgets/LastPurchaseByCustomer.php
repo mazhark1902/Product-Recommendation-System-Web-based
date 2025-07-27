@@ -5,9 +5,11 @@ namespace App\Filament\Widgets;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 
 class LastPurchaseByCustomer extends ChartWidget
 {
+    use HasWidgetShield;
     protected static ?string $heading = 'Last Purchase Date by Customer';
     protected static ?int $sort = 6;
 

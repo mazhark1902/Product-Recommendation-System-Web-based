@@ -4,9 +4,11 @@ namespace App\Filament\Widgets;
 
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\DB;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 
 class TopSparePartsByRevenue extends ChartWidget
 {
+    use HasWidgetShield;
     protected static ?string $heading = 'Top Spare Parts by Revenue';
 
     protected function getData(): array

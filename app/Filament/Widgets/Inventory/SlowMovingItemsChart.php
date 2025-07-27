@@ -5,9 +5,11 @@ namespace App\Filament\Widgets\Inventory;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 
 class SlowMovingItemsChart extends ChartWidget
 {
+    use HasWidgetShield;
     protected static ?string $heading = 'Top 5 Slow-Moving Items (Last 90 Days)';
     protected static ?int $sort = 7; // Sesuaikan urutannya
 

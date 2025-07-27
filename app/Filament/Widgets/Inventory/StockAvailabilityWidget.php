@@ -6,9 +6,11 @@ use App\Models\Inventory;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Facades\DB;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 
 class StockAvailabilityWidget extends BaseWidget
 {
+    use HasWidgetShield;
     // Atur urutan widget ini di dashboard
     protected static ?int $sort = 3;
 

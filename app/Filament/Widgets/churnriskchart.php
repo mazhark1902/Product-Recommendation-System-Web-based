@@ -5,9 +5,11 @@ namespace App\Filament\Widgets;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 
 class churnriskchart extends ChartWidget
 {
+    use HasWidgetShield;
     protected static ?string $heading = 'Customer Churn Risk Classification';
     protected static ?int $sort = 6;
 

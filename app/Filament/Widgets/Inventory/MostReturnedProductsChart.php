@@ -5,9 +5,11 @@ namespace App\Filament\Widgets\Inventory;
 use App\Models\ProductReturn;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\DB;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 
 class MostReturnedProductsChart extends ChartWidget
 {
+    use HasWidgetShield;
     protected static ?string $heading = 'Top 5 Produk Paling Sering Diretur';
     protected static ?int $sort = 6;
 

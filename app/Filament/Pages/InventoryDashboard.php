@@ -10,9 +10,11 @@ use App\Filament\Widgets\Inventory\SlowMovingItemsChart;
 use App\Filament\Widgets\Inventory\MostReturnedProductsChart;
 use App\Filament\Widgets\Inventory\FastMovingItemsChart;
 use App\Filament\Widgets\Inventory\PendingShipmentsTable;
+use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 
 class InventoryDashboard extends Page
 {
+    use HasPageShield;
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
     protected static ?string $navigationGroup = 'Inventory'; 
 

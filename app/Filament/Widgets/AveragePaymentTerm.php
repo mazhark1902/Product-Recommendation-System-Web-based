@@ -5,9 +5,11 @@ namespace App\Filament\Widgets;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Facades\DB;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 
 class AveragePaymentTerm extends BaseWidget
 {
+    use HasWidgetShield;
     protected function getStats(): array
     {
         return [

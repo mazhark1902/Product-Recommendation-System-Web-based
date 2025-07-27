@@ -12,10 +12,12 @@ use App\Models\InventoryMovement;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Livewire\WithFileUploads;
+use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 
 class ImportStock extends Page implements HasForms
 {
     use InteractsWithForms, WithFileUploads;
+    use HasPageShield;
 
     protected static ?string $navigationIcon = 'heroicon-o-arrow-up-tray';
     protected static string $view = 'filament.pages.import-stock';

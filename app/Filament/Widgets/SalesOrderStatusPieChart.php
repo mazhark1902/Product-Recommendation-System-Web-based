@@ -4,9 +4,11 @@ namespace App\Filament\Widgets;
 
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\DB;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 
 class SalesOrderStatusPieChart extends ChartWidget
 {
+    use HasWidgetShield;
     protected static ?string $heading = 'Sales Order Status Breakdown';
     protected static ?int $sort = 3;
 

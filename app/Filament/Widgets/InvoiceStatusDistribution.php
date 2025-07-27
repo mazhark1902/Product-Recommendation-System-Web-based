@@ -4,9 +4,11 @@ namespace App\Filament\Widgets;
 
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\DB;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 
 class InvoiceStatusDistribution extends ChartWidget
 {
+    use HasWidgetShield;
     protected static ?string $heading = 'Invoice Status Distribution';
 
     protected function getData(): array

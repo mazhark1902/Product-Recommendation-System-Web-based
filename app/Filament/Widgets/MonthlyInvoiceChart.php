@@ -5,9 +5,11 @@ namespace App\Filament\Widgets;
 use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\DB;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 
 class MonthlyInvoiceChart extends ChartWidget
 {
+    use HasWidgetShield;
     protected static ?string $heading = 'Top 4 Months by Invoice Amount';
 
     protected function getData(): array

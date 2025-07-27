@@ -5,9 +5,11 @@ namespace App\Filament\Widgets;
 use App\Models\Invoice;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Card;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 
 class DashboardOverview extends StatsOverviewWidget
 {
+    use HasWidgetShield;
     protected function getCards(): array
     {
         $totalSales = Invoice::sum('invoice_amount');

@@ -3,9 +3,11 @@
 namespace App\Filament\Widgets;
 
 use Filament\Widgets\ChartWidget;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 
 class SalesChart extends ChartWidget
 {
+    use HasWidgetShield;
     protected static ?string $heading = 'Sales Chart';
 
     protected function getFilters(): ?array

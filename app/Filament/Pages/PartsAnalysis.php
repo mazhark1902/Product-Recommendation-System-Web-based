@@ -8,9 +8,11 @@ use App\Filament\Widgets\TopSparePartsByRevenue;
 use App\Filament\Widgets\SparePartMonthlyTrend;
 use App\Filament\Widgets\SparePartCustomerSpread;
 use App\Filament\Widgets\SparePartsStats;
+use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 
 class PartsAnalysis extends Page
 {
+    use HasPageShield;
     protected static ?string $navigationIcon = 'heroicon-s-chart-pie';
     protected static ?string $navigationGroup = 'Customer Analysis';
     protected static string $view = 'filament.pages.parts-analysis';

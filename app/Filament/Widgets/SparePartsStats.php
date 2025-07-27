@@ -5,9 +5,11 @@ namespace App\Filament\Widgets;
 use Illuminate\Support\Facades\DB;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 
 class SparePartsStats extends BaseWidget
 {
+    use HasWidgetShield;
     protected function getStats(): array
     {
         // 1. Total Distinct Parts Sold

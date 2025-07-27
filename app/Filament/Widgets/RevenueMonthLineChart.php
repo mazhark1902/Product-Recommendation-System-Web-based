@@ -4,9 +4,11 @@ namespace App\Filament\Widgets;
 
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\DB;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 
 class RevenueMonthLineChart extends ChartWidget
 {
+    use HasWidgetShield;
     protected static ?string $heading = 'Revenue per Month';
 
     // ✅ Tambahkan filter tahun

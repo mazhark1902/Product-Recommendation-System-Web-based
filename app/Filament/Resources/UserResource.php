@@ -20,6 +20,7 @@ class UserResource extends Resource
     protected static ?string $model = User::class;
 
     protected static ?string $navigationIcon = 'heroicon-s-users';
+    public static ?string $navigationGroup = 'User Management';
 
     public static function form(Form $form): Form
     {
@@ -28,11 +29,11 @@ class UserResource extends Resource
                 TextInput::make('name')->required(),
                 TextInput::make('email')->email(),
                 TextInput::make('password')->password()->visibleOn('create'),
-                Forms\Components\Select::make('roles')
-                ->relationship('roles', 'name')
-                ->multiple()
-                ->preload()
-                ->searchable(),
+                // Forms\Components\Select::make('roles')
+                // ->relationship('roles', 'name')
+                // ->multiple()
+                // ->preload()
+                // ->searchable(),
             ]);
     }
 
@@ -43,9 +44,9 @@ class UserResource extends Resource
                 TextColumn::make('id')->sortable(),
                 TextColumn::make('name'),
                 TextColumn::make('email'),
-                // TextColumn::make('roles')
-                // ->label('Roles')
-                // ->formatStateUsing(fn ($state, $record) => $record->roles->pluck('name')->join(', ')),
+                TextColumn::make('roles')
+                ->label('Roles')
+                ->formatStateUsing(fn ($state, $record) => $record->roles->pluck('name')->join(', ')),
             ])
             ->filters([
                 //

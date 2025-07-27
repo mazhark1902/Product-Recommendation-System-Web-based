@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use Filament\Facades\Filament;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
+
 use Filament\Http\Responses\Auth\Contracts\LoginResponse;
 use Illuminate\Support\ServiceProvider; 
 use Filament\Http\Middleware\Authenticate;
@@ -47,6 +48,7 @@ class AdminPanelProvider extends PanelProvider
                 \App\Filament\Pages\AdminDashboard::class, // Ganti dari Pages\Dashboard
             ])
             ->navigationGroups([
+                NavigationGroup::make('User Management'),
                 NavigationGroup::make('Inventory'),
                 NavigationGroup::make('Sales'),
                 NavigationGroup::make('Customer Analysis'),
@@ -72,6 +74,8 @@ class AdminPanelProvider extends PanelProvider
             ])
 
             ->plugins([
+                FilamentShieldPlugin::make(),
+                
                 
                 // ... other plugins
                 ResizedColumnPlugin::make()

@@ -4,9 +4,11 @@ namespace App\Filament\Widgets;
 
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\DB;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 
 class TopSpendingCustomersChart extends ChartWidget
 {
+    use HasWidgetShield;
     protected static ?string $heading = 'Top 5 Customers by Total Spend';
 
     protected static ?int $sort = 7;

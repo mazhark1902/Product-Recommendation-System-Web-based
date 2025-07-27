@@ -4,9 +4,11 @@ namespace App\Filament\Widgets;
 
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\DB;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 
 class TopSparePartsByQuantity extends ChartWidget
 {
+    use HasWidgetShield;
     protected static ?string $heading = 'Top Spare Parts by Quantity Ordered';
 
     protected static ?int $sort = 0;

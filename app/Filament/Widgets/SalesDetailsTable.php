@@ -5,9 +5,11 @@ namespace App\Filament\Widgets;
 use Filament\Tables;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Illuminate\Database\Eloquent\Builder;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 
 class SalesDetailsTable extends BaseWidget
 {
+    use HasWidgetShield;
     protected static ?string $heading = 'Sales Details';
 
     protected function getTableQuery(): Builder

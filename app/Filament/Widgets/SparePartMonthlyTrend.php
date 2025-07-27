@@ -4,9 +4,11 @@ namespace App\Filament\Widgets;
 
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\DB;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 
 class SparePartMonthlyTrend extends ChartWidget
 {
+    use HasWidgetShield;
     protected static ?string $heading = 'Spare Part Monthly Trend';
     protected static ?int $sort = 3;
 

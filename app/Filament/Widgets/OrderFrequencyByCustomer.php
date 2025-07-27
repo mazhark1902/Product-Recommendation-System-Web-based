@@ -5,9 +5,11 @@ namespace App\Filament\Widgets;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 
 class OrderFrequencyByCustomer extends ChartWidget
 {
+    use HasWidgetShield;
     protected static ?string $heading = 'Order Frequency by Customer (Last 12 Months)';
     protected static ?int $sort = 7;
 

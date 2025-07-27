@@ -7,9 +7,11 @@ use App\Filament\Widgets\SalesDashboardKpi;
 use App\Filament\Widgets\RevenueMonthLineChart;
 use App\Filament\Widgets\TopCustomerBarChart;
 use App\Filament\Widgets\SalesOrderStatusPieChart;
+use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 
 class SalesDashboard extends Page
 {
+    use HasPageShield;
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
     protected static ?string $navigationGroup = 'Sales'; 
 

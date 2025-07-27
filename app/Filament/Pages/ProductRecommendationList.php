@@ -4,9 +4,11 @@ namespace App\Filament\Pages;
 
 use Filament\Pages\Page;
 use App\Models\TopRecommendation;
+use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 
 class ProductRecommendationList extends Page
 {
+    use HasPageShield;
     protected static ?string $navigationIcon = 'heroicon-s-gift';
     protected static ?string $navigationGroup = 'Customer Analysis'; 
 

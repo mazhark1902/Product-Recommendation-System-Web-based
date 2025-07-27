@@ -8,9 +8,11 @@ use Filament\Widgets\TableWidget as BaseWidget;
 use App\Models\Inventory;
 use Illuminate\Database\Eloquent\Builder;
 use Carbon\Carbon;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 
 class DeadStockTable extends BaseWidget
 {
+    use HasWidgetShield;
     protected static ?int $sort = 11;
     protected int | string | array $columnSpan = 'full';
     protected static ?string $heading = 'Laporan Stok Mati (Tidak Ada Penjualan 6 Bulan Terakhir)';

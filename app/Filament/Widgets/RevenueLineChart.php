@@ -3,9 +3,11 @@
 namespace App\Filament\Widgets;
 
 use Filament\Widgets\ChartWidget;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 
 class RevenueLineChart extends ChartWidget
 {
+    use HasWidgetShield;
     protected static ?string $heading = 'Revenue Trends';
 
     protected function getData(): array
