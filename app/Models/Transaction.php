@@ -16,6 +16,8 @@ class Transaction extends Model
         'status',
         'total_amount',
         'status_reminder',
+        'proof',
+        
     ];
     public function payments()
     {

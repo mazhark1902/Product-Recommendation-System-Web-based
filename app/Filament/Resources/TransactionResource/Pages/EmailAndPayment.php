@@ -30,6 +30,7 @@ class EmailAndPayment extends Page implements HasForms
 
     use InteractsWithForms;
     use WithFileUploads;
+    
 
     protected static string $resource = TransactionResource::class;
 
@@ -37,32 +38,33 @@ class EmailAndPayment extends Page implements HasForms
 
     public Transaction $record;
 
-    public $proofFile; 
+     public ?\Livewire\TemporaryUploadedFile $proofFile = null;
 
     public function mount(Transaction $record): void
     {
         $this->record = $record;
     }
-    public function submit()
-    {
-        if ($this->proofFile) {
-            $path = $this->proofFile->store('proofs', 'public'); // atau 'local' jika pakai default
+public function submit()
+{
+    if ($this->proofFile) {
+        $path = $this->proofFile->store('proofs', 'public');
 
-            $this->record->update([
-                'proof' => $path,
-            ]);
+        $this->record->update([
+            'proof' => $path,
+        ]);
 
-            Notification::make()
-                ->title('Bukti pembayaran berhasil disimpan')
-                ->success()
-                ->send();
-        } else {
-            Notification::make()
-                ->title('Bukti pembayaran belum dipilih')
-                ->danger()
-                ->send();
-        }
+        $this->dispatchBrowserEvent('swal:success', [
+            'title' => 'Berhasil!',
+            'text' => 'Bukti pembayaran berhasil disimpan.',
+        ]);
+    } else {
+        $this->dispatchBrowserEvent('swal:error', [
+            'title' => 'Gagal!',
+            'text' => 'Tidak ada file bukti yang dipilih.',
+        ]);
     }
+}
+
 
 
 
@@ -100,8 +102,12 @@ class EmailAndPayment extends Page implements HasForms
                     });
 
                     $this->record->update(['status_reminder' => 'has been sent']);
+                    $this->dispatch('show-toast', [
+                        'message' => 'Email berhasil dikirim',
+                        'type' => 'success',
+                    ]);
 
-                    Notification::make()->title('Email berhasil dikirim')->success()->send();
+                    // Notification::make()->title('Email berhasil dikirim')->success()->send();
                 }),
 
             Actions\Action::make('Open Email')
@@ -113,7 +119,7 @@ class EmailAndPayment extends Page implements HasForms
                 ->disabled(fn () => $this->record->proof === null)
                 ->action(function () {
                     $this->record->update(['status' => 'paid']);
-                    Notification::make()->title('Status diubah menjadi Paid')->success()->send();
+                    // Notification::make()->title('Status diubah menjadi Paid')->success()->send();
                 }),
 
                 // Actions\Action::make('Download Proof')
@@ -141,21 +147,22 @@ class EmailAndPayment extends Page implements HasForms
                             return 'PY-' . str_pad($lastNumber + 1, 5, '0', STR_PAD_LEFT);
                         })
                         ->disabled()
-                        ->dehydrated(false),
+                        ->dehydrated(true),// <-- Tambahkan ini
 
                     TextInput::make('invoice_id')
                         ->default(fn ($livewire) => $livewire->record->invoice_id)
                         ->disabled()
-                        ->dehydrated(false),
+                         ->dehydrated(true),
+
 
                     DatePicker::make('payment_date')->required(),
-                    DatePicker::make('amount_date')->required(),
+                    TextInput::make('amount_paid')->required(),
 
                     Select::make('payment_method')
                         ->options([
-                            'transfer' => 'Transfer',
-                            'cash' => 'Cash',
-                            'credit' => 'Credit',
+                            'Bank Transfer' => 'Bank Transfer',
+                            'Credit Note' => 'Credit Note',
+                            'e-Wallet' => 'e-Wallet',
                         ])
                         ->required(),
                 ])
@@ -168,12 +175,12 @@ class EmailAndPayment extends Page implements HasForms
                         'payment_id' => $data['payment_id'],
                         'invoice_id' => $livewire->record->invoice_id,
                         'payment_date' => $data['payment_date'],
-                        'amount_date' => $data['amount_date'],
+                        'amount_paid' => $data['amount_paid'],
                         'payment_method' => $data['payment_method'],
                         'created_at' => now(),
                     ]);
 
-                    Notification::make()->title('Payment saved successfully')->success()->send();
+                    // Notification::make()->title('Payment saved successfully')->success()->send();
                 })
         ];
     }

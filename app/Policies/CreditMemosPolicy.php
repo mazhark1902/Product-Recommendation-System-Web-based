@@ -3,10 +3,10 @@
 namespace App\Policies;
 
 use App\Models\User;
-use App\Models\ProductReturn;
+use App\Models\CreditMemos;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
-class ProductReturnPolicy
+class CreditMemosPolicy
 {
     use HandlesAuthorization;
 
@@ -15,15 +15,15 @@ class ProductReturnPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_product::return::sales');
+        return $user->can('view_any_credit::memos');
     }
 
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, ProductReturn $productReturn): bool
+    public function view(User $user, CreditMemos $creditMemos): bool
     {
-        return $user->can('view_product::return::sales');
+        return $user->can('view_credit::memos');
     }
 
     /**
@@ -31,23 +31,23 @@ class ProductReturnPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_product::return::sales');
+        return $user->can('create_credit::memos');
     }
 
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user, ProductReturn $productReturn): bool
+    public function update(User $user, CreditMemos $creditMemos): bool
     {
-        return $user->can('update_product::return::sales');
+        return $user->can('update_credit::memos');
     }
 
     /**
      * Determine whether the user can delete the model.
      */
-    public function delete(User $user, ProductReturn $productReturn): bool
+    public function delete(User $user, CreditMemos $creditMemos): bool
     {
-        return $user->can('delete_product::return::sales');
+        return $user->can('delete_credit::memos');
     }
 
     /**
@@ -55,15 +55,15 @@ class ProductReturnPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_product::return::sales');
+        return $user->can('delete_any_credit::memos');
     }
 
     /**
      * Determine whether the user can permanently delete.
      */
-    public function forceDelete(User $user, ProductReturn $productReturn): bool
+    public function forceDelete(User $user, CreditMemos $creditMemos): bool
     {
-        return $user->can('force_delete_product::return::sales');
+        return $user->can('force_delete_credit::memos');
     }
 
     /**
@@ -71,15 +71,15 @@ class ProductReturnPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_product::return::sales');
+        return $user->can('force_delete_any_credit::memos');
     }
 
     /**
      * Determine whether the user can restore.
      */
-    public function restore(User $user, ProductReturn $productReturn): bool
+    public function restore(User $user, CreditMemos $creditMemos): bool
     {
-        return $user->can('restore_product::return::sales');
+        return $user->can('restore_credit::memos');
     }
 
     /**
@@ -87,15 +87,15 @@ class ProductReturnPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_product::return::sales');
+        return $user->can('restore_any_credit::memos');
     }
 
     /**
      * Determine whether the user can replicate.
      */
-    public function replicate(User $user, ProductReturn $productReturn): bool
+    public function replicate(User $user, CreditMemos $creditMemos): bool
     {
-        return $user->can('replicate_product::return::sales');
+        return $user->can('replicate_credit::memos');
     }
 
     /**
@@ -103,6 +103,6 @@ class ProductReturnPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_product::return::sales');
+        return $user->can('reorder_credit::memos');
     }
 }
