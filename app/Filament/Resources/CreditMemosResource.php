@@ -20,8 +20,11 @@ class CreditMemosResource extends Resource
 
     use HasShieldFormComponents;
     protected static ?string $model = CreditMemos::class;
+    public static ?string $navigationGroup = 'Sales';
+    
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    
 
     public static function form(Form $form): Form
     {
