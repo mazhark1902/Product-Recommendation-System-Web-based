@@ -34,24 +34,36 @@ class CreditMemosResource extends Resource
             ]);
     }
 
-    public static function table(Table $table): Table
-    {
-        return $table
-            ->columns([
-                //
-            ])
-            ->filters([
-                //
-            ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ]);
-    }
+ public static function table(Table $table): Table
+{
+    return $table
+        ->columns([
+            Tables\Columns\TextColumn::make('credit_memos_id')->label('Credit Memo ID')->searchable()->sortable(),
+            Tables\Columns\TextColumn::make('return_id')->label('Return ID')->sortable(),
+            Tables\Columns\TextColumn::make('customer_id')->label('Dealer')->searchable()->sortable(),
+            Tables\Columns\TextColumn::make('amount')->label('Amount')->money('IDR'),
+            Tables\Columns\TextColumn::make('issued_date')->label('Issued At')->dateTime(),
+            Tables\Columns\BadgeColumn::make('status')
+                ->colors([
+                    'primary' => 'ISSUED',
+                    'success' => 'PAID',
+                    'danger' => 'EXPIRED',
+                ])
+                ->label('Status'),
+        ])
+        ->filters([
+            //
+        ])
+        ->actions([
+            Tables\Actions\ViewAction::make(),
+            Tables\Actions\EditAction::make(),
+        ])
+        ->bulkActions([
+            Tables\Actions\BulkActionGroup::make([
+                Tables\Actions\DeleteBulkAction::make(),
+            ]),
+        ]);
+}
 
     public static function getRelations(): array
     {

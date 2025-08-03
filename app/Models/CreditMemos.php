@@ -19,6 +19,7 @@ class CreditMemos extends Model
         'issued_date',
         'due_date',
         'status',
+        'customer_id',
     ];
 
     protected $dates = [
@@ -50,4 +51,5 @@ class CreditMemos extends Model
         $number = $last ? ((int)str_replace($prefix, '', $last->credit_memo_id)) + 1 : 1;
         return $prefix . str_pad($number, 5, '0', STR_PAD_LEFT);
     }
+    
 }
