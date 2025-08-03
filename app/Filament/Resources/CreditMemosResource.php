@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use BezhanSalleh\FilamentShield\Traits\HasShieldFormComponents;
 
-class CreditMemosResource extends Resource
+class CreditMemosResource extends Resource 
 {
 
     use HasShieldFormComponents;
