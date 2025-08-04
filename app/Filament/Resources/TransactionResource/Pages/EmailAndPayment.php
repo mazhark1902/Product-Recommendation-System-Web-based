@@ -181,7 +181,42 @@ public function submit()
                     ]);
 
                     // Notification::make()->title('Payment saved successfully')->success()->send();
-                })
+                }),
+
+                Actions\Action::make('Check Credit Memo')
+    ->label('Check Credit Memo')
+    ->color('warning')
+    ->action(function () {
+        $salesOrder = $this->record->salesOrder;
+
+        if (!$salesOrder || !$salesOrder->customer_id) {
+            Notification::make()
+                ->title('Customer ID tidak ditemukan')
+                ->danger()
+                ->send();
+            return;
+        }
+
+        $customerId = $salesOrder->customer_id;
+
+        // Ambil total credit memo dari customer tersebut
+        $totalCreditMemo = \App\Models\CreditMemos::where('customer_id', $customerId)->sum('amount');
+
+        if ($totalCreditMemo > 0) {
+            Notification::make()
+                ->title("Credit Memo ditemukan untuk Customer {$customerId}")
+                ->body("Total credit memo: Rp " . number_format($totalCreditMemo, 0, ',', '.'))
+                ->success()
+                ->send();
+        } else {
+            Notification::make()
+                ->title("Customer {$customerId} tidak memiliki credit memo")
+                ->warning()
+                ->send();
+        }
+    })
+
+                
         ];
     }
 }
