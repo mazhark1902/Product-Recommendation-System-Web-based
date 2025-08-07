@@ -16,7 +16,7 @@ use App\Models\Transaction; // Tambahkan ini
 use Illuminate\Support\Str; // Tambahkan ini
 use App\Models\Dealer; // Tambahkan ini jika perlu
 
-class CheckAvailability extends Page
+class GeneratingInvoice extends Page
 {
     protected static string $resource = SalesOrderResource::class; // Tambahkan ini
 
@@ -25,7 +25,8 @@ class CheckAvailability extends Page
     public bool $allAvailable = true;
     public array $notAvailableItems = [];
 
-    protected static string $view = 'filament.resources.sales-order-resource.pages.check-availability';
+    protected static string $view = 'filament.resources.sales-order-resource.pages.generating-invoice';
+
 
     public function mount(SalesOrder $record): void
     {
@@ -55,39 +56,6 @@ class CheckAvailability extends Page
             // 1. Update status sales order
             $salesOrder->update(['status' => 'confirmed']);
     
-            // 2. Buat delivery_order baru
-            $lastDO = DeliveryOrder::orderBy('delivery_order_id', 'desc')->first();
-            $newDoId = 'DO' . str_pad((int) Str::after($lastDO->delivery_order_id ?? 'DO00000', 'DO') + 1, 5, '0', STR_PAD_LEFT);
-    
-            $deliveryOrder = DeliveryOrder::create([
-                'delivery_order_id' => $newDoId,
-                'sales_order_id' => $salesOrder->sales_order_id,
-                'delivery_date' => now(),
-                'status' => 'pending',
-            ]);
-    
-            // 3. Buat delivery_items dan stock_reservations, update inventory
-            foreach ($salesOrder->items as $item) {
-                DeliveryItem::create([
-                    'delivery_order_id' => $deliveryOrder->delivery_order_id,
-                    'part_number' => $item->part_number,
-                    'quantity' => $item->quantity,
-                ]);
-    
-                StockReservation::create([
-                    'part_number' => $item->part_number,
-                    'sales_order_id' => $salesOrder->sales_order_id,
-                    'reserved_quantity' => $item->quantity,
-                    'reservation_date' => now(),
-                    'status' => 'ACTIVE',
-                ]);
-    
-                // Update quantity_reserved di inventory
-                $inventory = Inventory::where('product_id', $item->part_number)->first();
-                $inventory->update([
-                    'quantity_reserved' => $inventory->quantity_reserved + $item->quantity,
-                ]);
-            }
     
             // 4. Buat transaksi unpaid
             Transaction::create([
@@ -100,7 +68,7 @@ class CheckAvailability extends Page
             ]);
         });
     
-        Notification::make()->success()->title('Order Confirmed')->send();
+        Notification::make()->success()->title('Invoice Created')->send();
         $this->redirect(SalesOrderResource::getUrl('index'));
     }
     

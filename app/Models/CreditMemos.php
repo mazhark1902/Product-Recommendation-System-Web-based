@@ -36,6 +36,17 @@ class CreditMemos extends Model
     {
         return $this->belongsTo(SalesOrder::class);
     }
+    
+    
+
+    // Relasi ke Customer
+    // App\Models\CreditMemos.php
+
+    public function dealer()
+    {
+        return $this->belongsTo(\App\Models\OutletDealer::class, 'customer_id', 'outlet_code');
+    }
+    
 
     // Relasi ke Product Return
     public function productReturn()

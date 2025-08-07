@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use BezhanSalleh\FilamentShield\Traits\HasShieldFormComponents;
 
+
 class CreditMemosResource extends Resource 
 {
 
@@ -54,10 +55,49 @@ class CreditMemosResource extends Resource
         ->filters([
             //
         ])
-        ->actions([
-            Tables\Actions\ViewAction::make(),
-            Tables\Actions\EditAction::make(),
+->actions([
+
+    // 💬 View Modal Custom
+    Tables\Actions\Action::make('viewCreditMemoDetails')
+        ->label('View Credit Memo')
+        ->icon('heroicon-o-eye')
+        ->color('primary')
+        ->modalHeading('Credit Memo Details')
+        ->modalSubmitAction(false)
+        ->modalCancelActionLabel('Close')
+        ->modalContent(function (CreditMemos $record) {
+            return view('credit-memos.modal-details', compact('record'));
+        }),
+
+            // 📧 Email Credit Memo
+            Tables\Actions\Action::make('emailCreditMemo')
+                ->label('Email Credit Memo')
+                ->icon('heroicon-o-envelope')
+                ->color('success')
+                ->requiresConfirmation()
+                ->action(function (CreditMemos $record) {
+                    $dealerEmail = optional($record->dealer)->email;
+
+                    if (!$dealerEmail) {
+                        \Filament\Notifications\Notification::make()
+                            ->title('Email dealer tidak ditemukan.')
+                            ->danger()
+                            ->send();
+                        return;
+                    }
+
+                    \Illuminate\Support\Facades\Mail::send('emails.credit-memo', ['creditMemo' => $record], function ($message) use ($dealerEmail, $record) {
+                        $message->to($dealerEmail)
+                                ->subject("Credit Memo Notification - {$record->credit_memos_id}");
+                    });
+
+                    \Filament\Notifications\Notification::make()
+                        ->title('Email berhasil dikirim ke dealer.')
+                        ->success()
+                        ->send();
+                }),
         ])
+
         ->bulkActions([
             Tables\Actions\BulkActionGroup::make([
                 Tables\Actions\DeleteBulkAction::make(),

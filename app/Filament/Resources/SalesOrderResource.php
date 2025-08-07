@@ -68,12 +68,12 @@ class SalesOrderResource extends Resource
                     ->url(fn (SalesOrder $record) => route('filament.admin.resources.sales-orders.view', ['record' => $record]))
                     ->openUrlInNewTab(),
 
-                Action::make('check_availability')
-                    ->label('Check Availability')
-                    ->icon('heroicon-o-check-circle')
-                    ->url(fn (SalesOrder $record) => route('filament.admin.resources.sales-orders.check-availability', ['record' => $record]))
+                Action::make('generate_invoice')
+                    ->label('Generate Invoice')
+                    ->icon('heroicon-o-document-text')
+                    ->url(fn (SalesOrder $record) => route('filament.admin.resources.sales-orders.generating-invoice', ['record' => $record]))
                     ->openUrlInNewTab()
-                    ->visible(fn (SalesOrder $record) => $record->status === 'draft'), // Tambahkan kondisi ini
+                    ->visible(fn (SalesOrder $record) => $record->status === 'draft'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -94,7 +94,8 @@ class SalesOrderResource extends Resource
             // 'create' => Pages\CreateSalesOrder::route('/create'),
             'edit' => Pages\EditSalesOrder::route('/{record}/edit'),
             'view' => Pages\ViewSalesOrder::route('/{record}'), // custom view detail
-            'check-availability' => Pages\CheckAvailability::route('/{record}/check-availability'), // custom page
+            // Sesudah
+            'generating-invoice' => Pages\GeneratingInvoice::route('/{record}/generating-invoice'),
         ];
     }
 }

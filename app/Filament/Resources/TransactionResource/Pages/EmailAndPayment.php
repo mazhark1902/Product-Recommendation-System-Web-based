@@ -21,6 +21,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Livewire\WithFileUploads;
 use Filament\Forms\Contracts\HasForms;
+use App\Models\CreditMemos; 
 
 
 
@@ -94,12 +95,19 @@ public function submit()
                         return;
                     }
 
-                    Mail::send('emails.reminder', ['transaction' => $this->record], function ($message) use ($salesOrder) {
-                        $message->to($salesOrder->dealer->email)
-                            ->subject("NO {$this->record->invoice_id}_Dealer Reminder");
-                        $message->to($salesOrder->outlet->email)
-                            ->subject("NO {$this->record->invoice_id}_Outlet Reminder");
-                    });
+                Mail::send('emails.reminder', [
+                    'transaction' => $this->record,
+                    'creditAmount' => CreditMemos::where('customer_id', $salesOrder->customer_id)
+                        ->where('status', 'ISSUED')
+                        ->sum('amount'),
+                ], function ($message) use ($salesOrder) {
+                    $message->to($salesOrder->dealer->email)
+                        ->subject("NO {$this->record->invoice_id}_Dealer Reminder");
+                    $message->to($salesOrder->outlet->email)
+                        ->subject("NO {$this->record->invoice_id}_Outlet Reminder");
+                });
+
+                    
 
                     $this->record->update(['status_reminder' => 'has been sent']);
                     $this->dispatch('show-toast', [
@@ -114,13 +122,13 @@ public function submit()
                 ->color('gray')
                 ->url('https://mail.google.com/mail/u/0/#inbox', true),
 
-            Actions\Action::make('Change Status to Paid')
-                ->color('success')
-                ->disabled(fn () => $this->record->proof === null)
-                ->action(function () {
-                    $this->record->update(['status' => 'paid']);
-                    // Notification::make()->title('Status diubah menjadi Paid')->success()->send();
-                }),
+            // Actions\Action::make('Change Status to Paid')
+            //     ->color('success')
+            //     ->disabled(fn () => $this->record->proof === null)
+            //     ->action(function () {
+            //         $this->record->update(['status' => 'paid']);
+            //         // Notification::make()->title('Status diubah menjadi Paid')->success()->send();
+            //     }),
 
                 // Actions\Action::make('Download Proof')
                 //     ->color('secondary')
@@ -180,8 +188,17 @@ public function submit()
                         'created_at' => now(),
                     ]);
 
-                    // Notification::make()->title('Payment saved successfully')->success()->send();
-                }),
+                    // Update status to paid
+                    $livewire->record->update(['status' => 'paid']);
+
+                    Notification::make()
+                        ->title('Payment added and status updated to Paid')
+                        ->success()
+                        ->send();
+                })
+                ->disabled(fn () => $this->record->proof === null),
+
+
 
                 Actions\Action::make('Check Credit Memo')
     ->label('Check Credit Memo')
