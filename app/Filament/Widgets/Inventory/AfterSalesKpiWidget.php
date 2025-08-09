@@ -14,49 +14,49 @@ use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 class AfterSalesKpiWidget extends BaseWidget
 {
     use HasWidgetShield;
-    protected static ?int $sort = 1; // Prioritas tertinggi di dashboard
+    protected static ?int $sort = 1; // Highest priority on the dashboard
 
     protected function getStats(): array
     {
-        // KPI 1: Stok Kritis
+        // KPI 1: Critical Stock
         $criticalStockCount = Inventory::whereRaw('quantity_available <= minimum_stock')->count();
 
-        // KPI 2: Total Item Retur (30 Hari Terakhir)
+        // KPI 2: Total Returned Items (Last 30 Days)
         $totalReturnsLast30Days = ProductReturn::where('return_date', '>=', Carbon::now()->subDays(30))->count();
 
-        // KPI 3: Jumlah Stok Rusak
+        // KPI 3: Total Damaged Stock
         $totalDamagedStock = Inventory::sum('quantity_damaged');
 
-        // PERBAIKAN 1: Dapatkan nama tabel 'inventory' secara dinamis
+        // FIX 1: Get the 'inventory' table name dynamically
         $inventoryTable = (new Inventory())->getTable(); 
 
-        // KPI 4: Nilai Stok Rusak
+        // KPI 4: Value of Damaged Stock
         $damagedValue = Inventory::query()
             ->where('quantity_damaged', '>', 0)
-            // PERBAIKAN 2: Gunakan nama tabel yang benar dalam join
+            // FIX 2: Use the correct table name in the join
             ->join('sub_parts', "{$inventoryTable}.product_id", '=', 'sub_parts.sub_part_number')
-            // PERBAIKAN 3: Gunakan nama tabel yang benar dalam SUM
+            // FIX 3: Use the correct table name in the SUM
             ->sum(DB::raw("{$inventoryTable}.quantity_damaged * sub_parts.price"));
 
         return [
-            Stat::make('Stok Kritis', $criticalStockCount)
-                ->description('Item di bawah batas minimum')
+            Stat::make('Critical Stock', $criticalStockCount)
+                ->description('Items below the minimum threshold')
                 ->color($criticalStockCount > 0 ? 'danger' : 'success'),
-                // URL dihapus sementara untuk mencegah error. Anda bisa menambahkannya lagi
-                // jika sudah memiliki InventoryResource dengan menjalankan:
+                // URL temporarily removed to prevent errors. You can add it back
+                // if you have an InventoryResource by running:
                 // php artisan make:filament-resource Inventory --generate
                 // ->url(route('filament.admin.resources.inventories.index')),
 
-            Stat::make('Total Retur (30 Hari)', $totalReturnsLast30Days)
-                ->description('Retur yang masuk bulan ini')
+            Stat::make('Total Returns (30 Days)', $totalReturnsLast30Days)
+                ->description('Returns received this month')
                 ->color('warning'),
 
-            Stat::make('Jumlah Stok Rusak', $totalDamagedStock)
-                ->description('Total unit yang tercatat rusak')
+            Stat::make('Total Damaged Stock', $totalDamagedStock)
+                ->description('Total units recorded as damaged')
                 ->color('danger'),
 
-            Stat::make('Nilai Stok Rusak', 'Rp ' . number_format($damagedValue, 2))
-                ->description('Total kerugian dari stok rusak')
+            Stat::make('Damaged Stock Value', 'IDR ' . number_format($damagedValue, 2))
+                ->description('Total loss from damaged stock')
                 ->color('danger'),
         ];
     }

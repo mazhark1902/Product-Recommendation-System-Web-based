@@ -8,6 +8,9 @@ use Filament\Resources\Resource;
 use Filament\Tables\Table;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Forms\Form;
+use Filament\Forms;
+
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use BezhanSalleh\FilamentShield\Traits\HasShieldFormComponents;
 
@@ -37,11 +40,43 @@ class DeliveryOrderResource extends Resource
             ]);
     }
 
+    public static function form(Form $form): Form
+{
+    return $form
+        ->schema([
+            Forms\Components\TextInput::make('delivery_order_id')
+                ->label('Delivery ID')
+                ->disabled(), // Biasanya ID tidak bisa diedit
+
+            Forms\Components\TextInput::make('sales_order_id')
+                ->label('Sales Order ID')
+                ->disabled(), // Terkait dengan SO, seharusnya tidak diubah manual
+
+            Forms\Components\DatePicker::make('delivery_date')
+                ->label('Tanggal Pengiriman')
+                ->required(),
+
+            Forms\Components\Select::make('status')
+                ->options([
+                    'pending' => 'Pending',
+                    'ready' => 'Ready to Ship',
+                    'delivered' => 'Delivered',
+                    'cancelled' => 'Cancelled',
+                ])
+                ->required(),
+
+            Forms\Components\Textarea::make('notes')
+                ->label('Catatan Tambahan')
+                ->columnSpanFull(),
+        ]);
+}
+
     public static function getPages(): array
     {
         return [
             'index' => Pages\ListDeliveryOrders::route('/'),
             'view' => Pages\ViewDeliveryOrder::route('/{record}'),
+            'edit' => Pages\EditDeliveryOrder::route('/{record}/edit'),
         ];
     }
 }

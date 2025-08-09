@@ -114,7 +114,7 @@ class MasterPartResource extends Resource
                     ->icon('heroicon-m-eye')
                     ->url(fn ($record): string => static::getUrl('sub-parts', ['part_number' => $record->part_number]))
                     ->openUrlInNewTab(),
-                Tables\Actions\DeleteAction::make(),
+                // Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

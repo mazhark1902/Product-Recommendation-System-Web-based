@@ -36,10 +36,10 @@ class ImportStock extends Page implements HasForms
     {
         return [
             FileUpload::make('file')
-                ->label('Upload File CSV Stok Masuk')
+                ->label('Upload Incoming Stock CSV File')
                 ->acceptedFileTypes(['text/csv', 'application/vnd.ms-excel'])
                 ->required()
-                ->helperText('Gunakan header: product_id, quantity, location (opsional).')
+                ->helperText('Use headers: product_id, quantity, location (optional).')
                 ->reactive()
                 ->afterStateUpdated(function ($state) {
                     if (empty($state)) {
@@ -47,10 +47,8 @@ class ImportStock extends Page implements HasForms
                         session()->forget('import_preview_data');
                         return;
                     }
-                    // === PERUBAHAN UTAMA DI SINI ===
-                    // Langsung kirim objek $state, bukan $state[0]
+                    // Pass the uploaded file object directly
                     $this->processFile($state);
-                    // ==============================
                 }),
         ];
     }
@@ -66,7 +64,7 @@ class ImportStock extends Page implements HasForms
 
             $requiredHeaders = ['product_id', 'quantity'];
             if (count(array_diff($requiredHeaders, $header)) > 0) {
-                Notification::make()->title('Header CSV Tidak Sesuai!')->body('Pastikan file CSV mengandung kolom: ' . implode(', ', $requiredHeaders))->danger()->send();
+                Notification::make()->title('Invalid CSV Header!')->body('Ensure the CSV file contains the columns: ' . implode(', ', $requiredHeaders))->danger()->send();
                 fclose($fileHandle);
                 return;
             }
@@ -74,7 +72,7 @@ class ImportStock extends Page implements HasForms
             $validation = ['valid_rows' => [], 'invalid_rows' => []];
 
             while (($row = fgetcsv($fileHandle)) !== false) {
-                if (count(array_filter($row)) == 0) continue;
+                if (count(array_filter($row)) == 0) continue; // Skip empty rows
                 $rowData = array_combine($header, $row);
                 
                 $product = DB::table('sub_parts')->where('sub_part_number', $rowData['product_id'])->first();
@@ -84,7 +82,7 @@ class ImportStock extends Page implements HasForms
                     $rowData['product_name'] = $product->sub_part_name;
                     $validation['valid_rows'][] = $rowData;
                 } else {
-                    $rowData['error'] = !$product ? 'Product ID tidak ditemukan.' : 'Kuantitas tidak valid.';
+                    $rowData['error'] = !$product ? 'Product ID not found.' : 'Invalid quantity.';
                     $validation['invalid_rows'][] = $rowData;
                 }
             }
@@ -93,7 +91,7 @@ class ImportStock extends Page implements HasForms
             $this->previewData = $validation;
             session(['import_preview_data' => $validation['valid_rows']]);
         } catch (\Exception $e) {
-            Notification::make()->title('Gagal Membaca File')->body($e->getMessage())->danger()->send();
+            Notification::make()->title('Failed to Read File')->body($e->getMessage())->danger()->send();
             $this->previewData = [];
             session()->forget('import_preview_data');
         }
@@ -103,7 +101,7 @@ class ImportStock extends Page implements HasForms
     {
         $validRows = session('import_preview_data', []);
         if (empty($validRows)) {
-            Notification::make()->title('Tidak Ada Data untuk Diimpor')->warning()->send();
+            Notification::make()->title('No Data to Import')->warning()->send();
             return;
         }
 
@@ -112,6 +110,10 @@ class ImportStock extends Page implements HasForms
             foreach ($validRows as $row) {
                 $inventory = Inventory::firstOrCreate(['product_id' => $row['product_id']]);
                 $inventory->increment('quantity_available', (int)$row['quantity']);
+                // Location update can be added here if needed
+                // if (!empty($row['location'])) {
+                //     $inventory->location = $row['location'];
+                // }
                 $inventory->save();
 
                 InventoryMovement::create([
@@ -121,14 +123,15 @@ class ImportStock extends Page implements HasForms
                     'quantity' => (int)$row['quantity'],
                     'movement_date' => now(),
                     'reference_type' => 'CSV_IMPORT',
-                    'notes' => 'Stok masuk dari impor CSV.',
+                    'notes' => 'Stock in from CSV import.',
                 ]);
                 $processedCount++;
             }
             
-            Notification::make()->title('Impor Berhasil!')->body("Berhasil memproses {$processedCount} baris data.")->success()->send();
+            Notification::make()->title('Import Successful!')->body("Successfully processed {$processedCount} rows of data.")->success()->send();
         });
 
+        // Reset state after import
         $this->previewData = [];
         $this->file = null;
         session()->forget('import_preview_data');

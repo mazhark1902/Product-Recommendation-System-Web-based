@@ -11,45 +11,46 @@ use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 class StockAvailabilityWidget extends BaseWidget
 {
     use HasWidgetShield;
-    // Atur urutan widget ini di dashboard
+    // Set the order of this widget on the dashboard
     protected static ?int $sort = 3;
 
     protected function getStats(): array
     {
-        // Mengambil nama tabel dari model untuk menghindari kesalahan
+        // Get the table name from the model to avoid hardcoding errors
         $inventoryTable = (new Inventory())->getTable();
 
-        // Menjalankan satu query untuk mendapatkan semua data SUM agar lebih efisien
+        // Run a single query to get all SUM data for better efficiency
         $stockTotals = DB::table($inventoryTable)
             ->selectRaw('SUM(quantity_available) as total_available, SUM(quantity_reserved) as total_reserved')
             ->first();
         
+        // Calculate the total value of the inventory
         $totalValue = Inventory::query()
             ->join('sub_parts', 'inventory.product_id', '=', 'sub_parts.sub_part_number')
             ->sum(DB::raw('inventory.quantity_available * sub_parts.price'));
 
-        // Mengambil nilai dari hasil query
+        // Get the values from the query result, defaulting to 0 if null
         $availableStock = $stockTotals->total_available ?? 0;
         $reservedStock = $stockTotals->total_reserved ?? 0;
         
-        // Menghitung stok yang benar-benar bebas
+        // Calculate the actual free stock
         $freeStock = $availableStock - $reservedStock;
 
         return [
-            Stat::make('Total Nilai Inventaris', 'Rp ' . number_format($totalValue, 2))
-                ->description('Nilai total dari semua stok yang tersedia')
+            Stat::make('Total Inventory Value', 'IDR ' . number_format($totalValue, 2))
+                ->description('The total value of all available stock')
                 ->color('success'),
 
-            Stat::make('Stok Tersedia (On Hand)', number_format($availableStock))
-                ->description('Total stok fisik yang tercatat di semua gudang.')
+            Stat::make('Available Stock (On Hand)', number_format($availableStock))
+                ->description('Total physical stock recorded across all warehouses.')
                 ->color('primary'),
 
-            Stat::make('Stok Dipesan (Reserved)', number_format($reservedStock))
-                ->description('Stok yang sudah dialokasikan untuk sales order aktif.')
+            Stat::make('Reserved Stock', number_format($reservedStock))
+                ->description('Stock that has been allocated for active sales orders.')
                 ->color('warning'),
 
-            Stat::make('Stok Bebas (Free Stock)', number_format($freeStock))
-                ->description('Jumlah stok aman yang bisa dijanjikan ke pelanggan.')
+            Stat::make('Free Stock', number_format($freeStock))
+                ->description('The amount of safe stock that can be promised to customers.')
                 ->color('success'),
         ];
     }
