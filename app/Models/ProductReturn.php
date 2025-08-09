@@ -23,4 +23,11 @@ class ProductReturn extends Model
     {
         return $this->belongsTo(SubPart::class, 'part_number', 'sub_part_number');
     }
+
+    // --- PASTIKAN FUNGSI INI ADA ---
+    public function inventoryMovements()
+    {
+        return $this->hasMany(InventoryMovement::class, 'reference_id', 'id')
+                    ->where('reference_type', 'PRODUCT_RETURN');
+    }
 }
