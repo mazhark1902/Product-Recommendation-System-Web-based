@@ -6,6 +6,8 @@ use App\Models\DeliveryOrder;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
+use App\Filament\Resources\DeliveryOrderResource;
+use Filament\Tables\Filters\SelectFilter; // Import SelectFilter
 use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 
 class PendingShipmentsTable extends BaseWidget
@@ -16,29 +18,29 @@ class PendingShipmentsTable extends BaseWidget
 
     public function table(Table $table): Table
     {
-        // Model 'DeliveryOrder' harus menunjuk ke tabel 'delivery_orders'
-        // dan memiliki relasi ke SalesOrder
+        // The 'DeliveryOrder' model must point to the 'delivery_orders' table
+        // and have a relationship with SalesOrder.
         return $table
             ->query(
                 DeliveryOrder::query()
                     ->whereIn('status', ['pending', 'ready'])
                     ->orderBy('delivery_date', 'desc')
             )
-            ->heading('Pengiriman Tertunda (Klaim/Retur)')
+            ->heading('Pending Shipments')
             ->columns([
                 Tables\Columns\TextColumn::make('delivery_date')
                     ->date()
                     ->sortable()
-                    ->label('Tgl. Pengiriman'),
+                    ->label('Shipment Date'),
 
-                // Mengambil nama customer melalui relasi: DeliveryOrder -> SalesOrder -> OutletDealer
+                // Get customer name via relationship: DeliveryOrder -> SalesOrder -> OutletDealer
                 Tables\Columns\TextColumn::make('salesOrder.customer.outlet_name')
-                    ->label('Nama Dealer/Customer')
+                    ->label('Dealer/Customer Name')
                     ->searchable()
-                    ->placeholder('Customer tidak terdaftar'),
+                    ->placeholder('Customer not registered'),
 
                 Tables\Columns\TextColumn::make('sales_order_id')
-                    ->label('ID Sales Order')
+                    ->label('Sales Order ID')
                     ->searchable(),
 
                 Tables\Columns\BadgeColumn::make('status')
@@ -48,28 +50,38 @@ class PendingShipmentsTable extends BaseWidget
                         'primary' => 'ready',
                     ]),
             ])
+
+            ->filters([
+                SelectFilter::make('status')
+                    ->options([
+                        'pending' => 'Pending',
+                        'ready' => 'Ready',
+                    ])
+            ])
+
             ->actions([
                 Tables\Actions\Action::make('viewDelivery')
-                    ->label('Lihat Detail')
+                    ->label('View Details')
                     ->icon('heroicon-o-truck')
-                    // Arahkan ke resource DeliveryOrder jika ada
-                    ->url(fn (DeliveryOrder $record): string => url("/admin/delivery-orders/{$record->id}/edit")),
+                    // Redirect to the DeliveryOrder resource if it exists
+                    ->url(fn (DeliveryOrder $record): string => DeliveryOrderResource::getUrl('view', ['record' => $record->id])),
             ])
-            ->emptyStateHeading('Tidak ada pengiriman yang tertunda');
+            ->emptyStateHeading('No pending shipments');
     }
 
     /**
-     * Pastikan model-model berikut memiliki relasi yang tepat.
-     * * di App\Models\DeliveryOrder.php:
+     * Ensure the following models have the correct relationships.
+     *
+     * In App\Models\DeliveryOrder.php:
      * public function salesOrder() {
      * return $this->belongsTo(\App\Models\SalesOrder::class, 'sales_order_id', 'sales_order_id');
      * }
      *
-     * di App\Models\SalesOrder.php:
+     * In App\Models\SalesOrder.php:
      * public function customer() {
      * return $this->belongsTo(\App\Models\OutletDealer::class, 'customer_id', 'outlet_code');
      * }
      *
-     * Pastikan juga Anda memiliki model OutletDealer.php
+     * Also, ensure you have the OutletDealer.php model.
      */
 }

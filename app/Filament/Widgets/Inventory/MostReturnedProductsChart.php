@@ -10,7 +10,7 @@ use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 class MostReturnedProductsChart extends ChartWidget
 {
     use HasWidgetShield;
-    protected static ?string $heading = 'Top 5 Produk Paling Sering Diretur';
+    protected static ?string $heading = 'Top 5 Most Frequently Returned Products';
     protected static ?int $sort = 6;
 
     protected function getData(): array
@@ -26,7 +26,7 @@ class MostReturnedProductsChart extends ChartWidget
         return [
             'datasets' => [
                 [
-                    'label' => 'Jumlah Diretur',
+                    'label' => 'Total Returned',
                     'data' => $data->pluck('total_returned')->all(),
                     'backgroundColor' => '#FF6384',
                 ],

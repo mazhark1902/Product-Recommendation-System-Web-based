@@ -25,9 +25,9 @@ class InventoryDashboard extends Page
         return [
             StockAvailabilityWidget::class,
             AfterSalesKpiWidget::class,
-            DeadStockTable::class,
-            SlowMovingItemsChart::class,
+            // SlowMovingItemsChart::class,
             MostReturnedProductsChart::class,
+            DeadStockTable::class,
             // FastMovingItemsChart::class,
             PendingShipmentsTable::class,
             

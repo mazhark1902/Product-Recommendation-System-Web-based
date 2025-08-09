@@ -41,14 +41,14 @@ class ProductReturnResource extends Resource
                 TextColumn::make('sales_order_id')->label('Sales Order ID')->searchable(),
                 TextColumn::make('part_number')->label('Part Number')->searchable(),
                 TextColumn::make('quantity')->label('Qty'),
-                BadgeColumn::make('condition')->label('Kondisi')
+                BadgeColumn::make('condition')->label('Condition')
                     ->colors([
                         'success' => 'GOOD',
                         'danger' => 'DAMAGED',
                     ]),
-                TextColumn::make('reason')->label('Alasan Retur'),
+                TextColumn::make('reason')->label('Return Reason'),
                 BadgeColumn::make('status')
-                    ->label('Status Proses')
+                    ->label('Process Status')
                     ->getStateUsing(function (ProductReturn $record) {
                         $isProcessed = InventoryMovement::where('reference_type', 'PRODUCT_RETURN')
                             ->where('reference_id', $record->id)->exists();
@@ -61,17 +61,17 @@ class ProductReturnResource extends Resource
             ])
             ->actions([
                 Action::make('process_return')
-                    ->label('Proses Retur')
+                    ->label('Process Return')
                     ->icon('heroicon-o-cog')
                     ->color('primary')
                     ->requiresConfirmation()
-                    ->modalHeading('Proses Barang Retur')
-                    ->modalDescription('Aksi ini akan menambahkan stok kembali ke inventaris. Lanjutkan?')
+                    ->modalHeading('Process Returned Item')
+                    ->modalDescription('This action will add the stock back to the inventory. Continue?')
                     ->action(function (ProductReturn $record) {
                         DB::transaction(function () use ($record) {
                             $inventory = Inventory::firstOrCreate(
                                 ['product_id' => $record->part_number],
-                                ['quantity_available' => 0, 'minimum_stock' => 10]
+                                ['quantity_available' => 0, 'minimum_stock' => 10] // Default values if new
                             );
 
                             if ($record->condition === 'GOOD') {
@@ -88,13 +88,13 @@ class ProductReturnResource extends Resource
                                 'movement_date' => now(),
                                 'reference_type' => 'PRODUCT_RETURN',
                                 'reference_id' => $record->id,
-                                'notes' => "Stok masuk dari retur #{$record->return_id}, Kondisi: {$record->condition}",
+                                'notes' => "Stock in from return #{$record->return_id}, Condition: {$record->condition}",
                             ]);
                         });
 
                         Notification::make()
-                            ->title('Retur Berhasil Diproses')
-                            ->body("Stok untuk part {$record->part_number} telah dikembalikan ke inventaris.")
+                            ->title('Return Processed Successfully')
+                            ->body("Stock for part {$record->part_number} has been returned to inventory.")
                             ->success()->send();
                     })
                     ->visible(function (ProductReturn $record): bool {
