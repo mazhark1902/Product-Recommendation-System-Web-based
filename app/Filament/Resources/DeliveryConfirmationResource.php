@@ -96,7 +96,8 @@ class DeliveryConfirmationResource extends Resource
                             ])
                     ])
                     ->modalWidth('3xl')
-                    ->modalSubmitActionLabel('Close'),
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Close'),
 
                 Action::make('confirm_delivery')
                     ->label('Confirm & Ship')
