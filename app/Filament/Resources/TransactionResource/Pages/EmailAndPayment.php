@@ -16,22 +16,18 @@ use Filament\Notifications\Notification;
 use Illuminate\Support\HtmlString;
 use App\Models\Payment;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\DatePicker;   
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Livewire\WithFileUploads;
 use Filament\Forms\Contracts\HasForms;
-use App\Models\CreditMemos; 
-
-
-
+use App\Models\CreditMemos;
+use Illuminate\Support\Facades\DB; // <- tambah DB
 
 class EmailAndPayment extends Page implements HasForms
 {
-
     use InteractsWithForms;
     use WithFileUploads;
-    
 
     protected static string $resource = TransactionResource::class;
 
@@ -39,48 +35,45 @@ class EmailAndPayment extends Page implements HasForms
 
     public Transaction $record;
 
-     public ?\Livewire\TemporaryUploadedFile $proofFile = null;
+    public ?\Livewire\TemporaryUploadedFile $proofFile = null;
 
     public function mount(Transaction $record): void
     {
         $this->record = $record;
     }
-public function submit()
-{
-    if ($this->proofFile) {
-        $path = $this->proofFile->store('proofs', 'public');
 
-        $this->record->update([
-            'proof' => $path,
-        ]);
+    public function submit()
+    {
+        if ($this->proofFile) {
+            $path = $this->proofFile->store('proofs', 'public');
 
-        $this->dispatchBrowserEvent('swal:success', [
-            'title' => 'Berhasil!',
-            'text' => 'Bukti pembayaran berhasil disimpan.',
-        ]);
-    } else {
-        $this->dispatchBrowserEvent('swal:error', [
-            'title' => 'Gagal!',
-            'text' => 'Tidak ada file bukti yang dipilih.',
-        ]);
-    }
-}
+            $this->record->update([
+                'proof' => $path,
+            ]);
 
-
-
-
-        protected function getFormSchema(): array
-        {
-            return [
-                FileUpload::make('proofFile')
-                    ->label('Upload Bukti Pembayaran')
-                    ->acceptedFileTypes(['image/png', 'image/jpeg'])
-                    ->directory('proofs')
-                    ->required()
-                    ->columnSpanFull(),
-            ];
+            $this->dispatchBrowserEvent('swal:success', [
+                'title' => 'Berhasil!',
+                'text' => 'Bukti pembayaran berhasil disimpan.',
+            ]);
+        } else {
+            $this->dispatchBrowserEvent('swal:error', [
+                'title' => 'Gagal!',
+                'text' => 'Tidak ada file bukti yang dipilih.',
+            ]);
         }
+    }
 
+    protected function getFormSchema(): array
+    {
+        return [
+            FileUpload::make('proofFile')
+                ->label('Upload Bukti Pembayaran')
+                ->acceptedFileTypes(['image/png', 'image/jpeg'])
+                ->directory('proofs')
+                ->required()
+                ->columnSpanFull(),
+        ];
+    }
 
     protected function getHeaderActions(): array
     {
@@ -95,55 +88,30 @@ public function submit()
                         return;
                     }
 
-                Mail::send('emails.reminder', [
-                    'transaction' => $this->record,
-                    'creditAmount' => CreditMemos::where('customer_id', $salesOrder->customer_id)
-                        ->where('status', 'ISSUED')
-                        ->sum('amount'),
-                ], function ($message) use ($salesOrder) {
-                    $message->to($salesOrder->dealer->email)
-                        ->subject("NO {$this->record->invoice_id}_Dealer Reminder");
-                    $message->to($salesOrder->outlet->email)
-                        ->subject("NO {$this->record->invoice_id}_Outlet Reminder");
-                });
-
-                    
+                    Mail::send('emails.reminder', [
+                        'transaction' => $this->record,
+                        'creditAmount' => CreditMemos::where('customer_id', $salesOrder->customer_id)
+                            ->where('status', 'ISSUED')
+                            ->sum('amount'),
+                    ], function ($message) use ($salesOrder) {
+                        $message->to($salesOrder->dealer->email)
+                            ->subject("NO {$this->record->invoice_id}_Dealer Reminder");
+                        $message->to($salesOrder->outlet->email)
+                            ->subject("NO {$this->record->invoice_id}_Outlet Reminder");
+                    });
 
                     $this->record->update(['status_reminder' => 'has been sent']);
                     $this->dispatch('show-toast', [
                         'message' => 'Email berhasil dikirim',
                         'type' => 'success',
                     ]);
-
-                    // Notification::make()->title('Email berhasil dikirim')->success()->send();
                 }),
 
             Actions\Action::make('Open Email')
                 ->color('gray')
                 ->url('https://mail.google.com/mail/u/0/#inbox', true),
 
-            // Actions\Action::make('Change Status to Paid')
-            //     ->color('success')
-            //     ->disabled(fn () => $this->record->proof === null)
-            //     ->action(function () {
-            //         $this->record->update(['status' => 'paid']);
-            //         // Notification::make()->title('Status diubah menjadi Paid')->success()->send();
-            //     }),
-
-                // Actions\Action::make('Download Proof')
-                //     ->color('secondary')
-                //     ->disabled(fn () => $this->record->proof === null)
-                //     ->action(function () {
-                //         $proofPath = 'proofs/' . $this->record->proof;
-                //         if (Storage::exists($proofPath)) {
-                //             return Storage::download($proofPath);
-                //         } else {
-                //             Notification::make()->title('Bukti pembayaran tidak ditemukan')->danger()->send();
-                //         }
-
-                //     }),
-
-                Actions\Action::make('Add Payment')
+            Actions\Action::make('Add Payment')
                 ->label('Add Payment')
                 ->color('success')
                 ->icon('heroicon-o-plus')
@@ -155,22 +123,19 @@ public function submit()
                             return 'PY-' . str_pad($lastNumber + 1, 5, '0', STR_PAD_LEFT);
                         })
                         ->disabled()
-                        ->dehydrated(true),// <-- Tambahkan ini
+                        ->dehydrated(true),
 
                     TextInput::make('invoice_id')
                         ->default(fn ($livewire) => $livewire->record->invoice_id)
                         ->disabled()
-                         ->dehydrated(true),
-
+                        ->dehydrated(true),
 
                     DatePicker::make('payment_date')->required(),
                     TextInput::make('amount_paid')->required(),
-
                     Select::make('payment_method')
                         ->options([
                             'Bank Transfer' => 'Bank Transfer',
                             'Credit Note' => 'Credit Note',
-                            'e-Wallet' => 'e-Wallet',
                         ])
                         ->required(),
                 ])
@@ -179,61 +144,108 @@ public function submit()
                 ->modalSubmitActionLabel('Save')
                 ->modalCancelActionLabel('Decline')
                 ->action(function (array $data, EmailAndPayment $livewire) {
-                    Payment::create([
-                        'payment_id' => $data['payment_id'],
-                        'invoice_id' => $livewire->record->invoice_id,
-                        'payment_date' => $data['payment_date'],
-                        'amount_paid' => $data['amount_paid'],
-                        'payment_method' => $data['payment_method'],
-                        'created_at' => now(),
-                    ]);
+                    // Validasi & proses payment (termasuk pemakaian Credit Memo jika dipilih)
+                    $paymentAmount = (float) $data['amount_paid'];
+                    $paymentMethod = $data['payment_method'];
 
-                    // Update status to paid
-                    $livewire->record->update(['status' => 'paid']);
+                    DB::transaction(function () use ($data, $livewire, $paymentAmount, $paymentMethod) {
+                        // Create Payment record
+                        Payment::create([
+                            'payment_id' => $data['payment_id'],
+                            'invoice_id' => $livewire->record->invoice_id,
+                            'payment_date' => $data['payment_date'],
+                            'amount_paid' => $paymentAmount,
+                            'payment_method' => $paymentMethod,
+                            'created_at' => now(),
+                        ]);
 
+                        // If payment via Credit Note, consume credit memos
+                        if ($paymentMethod === 'Credit Note') {
+                            $salesOrder = $livewire->record->salesOrder;
+                            if (!$salesOrder || !$salesOrder->customer_id) {
+                                throw new \Exception('Sales order / customer not found for this transaction.');
+                            }
+
+                            $customerId = $salesOrder->customer_id;
+
+                            // Ambil semua credit memos ISSUED
+                            $creditMemos = CreditMemos::where('customer_id', $customerId)
+                                ->where('status', 'ISSUED')
+                                ->orderBy('issued_date') // dipakai urut lama -> baru
+                                ->get();
+
+                            $totalAvailable = $creditMemos->sum('amount');
+
+                            if ($totalAvailable < $paymentAmount) {
+                                // jika tidak cukup, rollback & lempar exception untuk ditangani di luar
+                                throw new \Exception('Insufficient credit memo balance for this customer.');
+                            }
+
+                            $remaining = $paymentAmount;
+
+                            foreach ($creditMemos as $memo) {
+                                if ($remaining <= 0) break;
+
+                                if ($memo->amount <= $remaining) {
+                                    // fully consumed : ubah status jadi REFUNDED (amount tetap)
+                                    $remaining -= $memo->amount;
+                                    $memo->status = 'REFUNDED';
+                                    $memo->save();
+                                } else {
+                                    // partially consumed : kurangi amount, tetap ISSUED
+                                    $memo->amount = $memo->amount - $remaining;
+                                    $memo->save();
+                                    $remaining = 0;
+                                    break;
+                                }
+                            }
+                        }
+
+                        // Update transaction status -> paid
+                        $livewire->record->update(['status' => 'paid']);
+                    });
+
+                    // jika sampai sini sukses
                     Notification::make()
-                        ->title('Payment added and status updated to Paid')
+                        ->title('Payment saved successfully and transaction updated to Paid')
                         ->success()
                         ->send();
                 })
                 ->disabled(fn () => $this->record->proof === null),
 
 
+            Actions\Action::make('Check Credit Memo')
+                ->label('Check Credit Memo')
+                ->color('warning')
+                ->action(function () {
+                    $salesOrder = $this->record->salesOrder;
 
-                Actions\Action::make('Check Credit Memo')
-    ->label('Check Credit Memo')
-    ->color('warning')
-    ->action(function () {
-        $salesOrder = $this->record->salesOrder;
+                    if (!$salesOrder || !$salesOrder->customer_id) {
+                        Notification::make()
+                            ->title('Customer ID tidak ditemukan')
+                            ->danger()
+                            ->send();
+                        return;
+                    }
 
-        if (!$salesOrder || !$salesOrder->customer_id) {
-            Notification::make()
-                ->title('Customer ID tidak ditemukan')
-                ->danger()
-                ->send();
-            return;
-        }
+                    $customerId = $salesOrder->customer_id;
 
-        $customerId = $salesOrder->customer_id;
+                    // Ambil total credit memo dari customer tersebut
+                    $totalCreditMemo = \App\Models\CreditMemos::where('customer_id', $customerId)->sum('amount');
 
-        // Ambil total credit memo dari customer tersebut
-        $totalCreditMemo = \App\Models\CreditMemos::where('customer_id', $customerId)->sum('amount');
-
-        if ($totalCreditMemo > 0) {
-            Notification::make()
-                ->title("Credit Memo ditemukan untuk Customer {$customerId}")
-                ->body("Total credit memo: Rp " . number_format($totalCreditMemo, 0, ',', '.'))
-                ->success()
-                ->send();
-        } else {
-            Notification::make()
-                ->title("Customer {$customerId} tidak memiliki credit memo")
-                ->warning()
-                ->send();
-        }
-    })
-
-                
+                    if ($totalCreditMemo > 0) {
+                        Notification::make()
+                            ->title("Credit Memo ditemukan untuk Customer {$customerId}")
+                            ->body("Total credit memo: Rp " . number_format($totalCreditMemo, 0, ',', '.'))
+                            ->success()
+                            ->send();
+                    } else {
+                        Notification::make()
+                            ->title("Customer {$customerId} tidak memiliki credit memo")
+                            ->warning()
+                            ->send();
+                    }
+                }),
         ];
     }
 }

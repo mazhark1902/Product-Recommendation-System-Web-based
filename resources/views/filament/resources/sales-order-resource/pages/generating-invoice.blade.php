@@ -67,7 +67,8 @@
             <x-filament::button color="success" disabled>Generate & Sent Invoice</x-filament::button>
             <x-filament::button wire:click="rejectOrder" color="danger">Reject</x-filament::button>
             <x-filament::button wire:click="checkStock" color="gray">Check Stock</x-filament::button>
-            <x-filament::button color="warning">Email Restock</x-filament::button>
+            <x-filament::button wire:click="emailRestock" color="warning">Email Restock</x-filament::button>
+
         @endif
     </div>
 </x-filament::page>

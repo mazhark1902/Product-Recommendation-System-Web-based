@@ -32,5 +32,10 @@
         </table>
     </x-filament::card>
 
+<script>
+Livewire.on('force-download', event => {
+    window.open(event.url, '_blank');
+});
+</script>
 
 </x-filament::page>

@@ -58,44 +58,49 @@ class CreditMemosResource extends Resource
 ->actions([
 
     // 💬 View Modal Custom
-    Tables\Actions\Action::make('viewCreditMemoDetails')
-        ->label('View Credit Memo')
-        ->icon('heroicon-o-eye')
-        ->color('primary')
-        ->modalHeading('Credit Memo Details')
-        ->modalSubmitAction(false)
-        ->modalCancelActionLabel('Close')
-        ->modalContent(function (CreditMemos $record) {
-            return view('credit-memos.modal-details', compact('record'));
-        }),
+    Tables\Actions\Action::make('emailCreditMemo')
+    ->label('Email Credit Memo')
+    ->icon('heroicon-o-envelope')
+    ->color('success')
+    ->requiresConfirmation()
+    ->action(function (CreditMemos $record) {
+        $dealerEmail = optional($record->dealer)->email;
 
-            // 📧 Email Credit Memo
-            Tables\Actions\Action::make('emailCreditMemo')
-                ->label('Email Credit Memo')
-                ->icon('heroicon-o-envelope')
-                ->color('success')
-                ->requiresConfirmation()
-                ->action(function (CreditMemos $record) {
-                    $dealerEmail = optional($record->dealer)->email;
+        if (!$dealerEmail) {
+            \Filament\Notifications\Notification::make()
+                ->title('Email dealer tidak ditemukan.')
+                ->danger()
+                ->send();
+            return;
+        }
 
-                    if (!$dealerEmail) {
-                        \Filament\Notifications\Notification::make()
-                            ->title('Email dealer tidak ditemukan.')
-                            ->danger()
-                            ->send();
-                        return;
-                    }
+        // Generate PDF dokumen credit memo
+        $pdf = \PDF::loadView('pdf.credit_memo', [
+            'creditMemo' => $record,
+            // Tambahkan data lain jika perlu, misal relasi, detail item, dll
+        ]);
 
-                    \Illuminate\Support\Facades\Mail::send('emails.credit-memo', ['creditMemo' => $record], function ($message) use ($dealerEmail, $record) {
-                        $message->to($dealerEmail)
-                                ->subject("Credit Memo Notification - {$record->credit_memos_id}");
-                    });
+        $fileName = "credit_memo_{$record->credit_memos_id}.pdf";
+        $pdfPath = storage_path("app/public/{$fileName}");
+        $pdf->save($pdfPath);
 
-                    \Filament\Notifications\Notification::make()
-                        ->title('Email berhasil dikirim ke dealer.')
-                        ->success()
-                        ->send();
-                }),
+        // Kirim email dengan attachment PDF
+        \Illuminate\Support\Facades\Mail::send('emails.credit-memo', [
+            'creditMemo' => $record,
+            'dealerEmail' => $dealerEmail,
+            // Bisa juga pass company info, contact person, dll ke view email
+        ], function ($message) use ($dealerEmail, $fileName, $pdfPath, $record) {
+            $message->to($dealerEmail)
+                ->subject("Credit Memo Notification - {$record->credit_memos_id}")
+                ->attach($pdfPath);
+        });
+
+        \Filament\Notifications\Notification::make()
+            ->title("Berhasil Generate Document Credit Memo & Send Email ke: {$dealerEmail}")
+            ->success()
+            ->send();
+    }),
+
         ])
 
         ->bulkActions([

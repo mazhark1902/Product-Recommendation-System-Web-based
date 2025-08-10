@@ -28,6 +28,10 @@ class SalesOrder extends Model
         return $this->belongsTo(OutletDealer::class, 'customer_id', 'outlet_code');
     }
     
+    public function deliveryOrders()
+    {
+        return $this->hasMany(DeliveryOrder::class, 'sales_order_id', 'sales_order_id');
+    }
 
     public function dealer()
     {

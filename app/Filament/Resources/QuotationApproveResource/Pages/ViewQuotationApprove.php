@@ -16,6 +16,10 @@ use App\Models\StockReservation;
 use App\Models\Transaction;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use PDF;
+use Illuminate\Support\Facades\Storage;
+
 
 class ViewQuotationApprove extends ViewRecord
 {
@@ -24,87 +28,112 @@ class ViewQuotationApprove extends ViewRecord
     protected function getActions(): array
     {
         return [
-            Action::make('Approve')
-            ->label('Approve')
-            ->color('success')
-            ->requiresConfirmation()
-            ->modalHeading('Generate Sales Order & Delivery Order')
-            ->modalSubheading("Automatically generate sales orders & delivery orders from Quotation ID: {$this->record->quotation_id}?")
-            ->action(function () {
-                DB::transaction(function () {
-                    // Step 1: Approve quotation
-                    $this->record->update(['status' => 'Approved']);
+                        Action::make('Approve')
+                ->label('Approve')
+                ->color('success')
+                ->requiresConfirmation()
+                ->modalHeading('Generate Sales Order, Delivery Order & Send Quotation PDF')
+                ->modalSubheading("This will generate sales & delivery orders, send quotation PDF to outlet, and download it.")
+                ->action(function () {
+                                            $fileName = null;  // Inisialisasi variabel di luar transaction
+                    DB::transaction(function () use (&$fileName) {
 
-                    // Step 2: Generate sales order
-                    $quotation = $this->record->load(['items', 'outlet']);
-                    $lastSo = \App\Models\SalesOrder::orderBy('sales_order_id', 'desc')->first()?->sales_order_id ?? 'SO55000';
-                    $nextNumber = str_pad((intval(substr($lastSo, 2)) + 1), 5, '0', STR_PAD_LEFT);
-                    $salesOrderId = 'SO' . $nextNumber;
+                        // Step 1: Approve quotation
+                        $this->record->update(['status' => 'Approved']);
 
-                    $salesOrder = \App\Models\SalesOrder::create([
-                        'sales_order_id' => $salesOrderId,
-                        'customer_id' => $quotation->outlet_code,
-                        'quotation_id' => $quotation->quotation_id,
-                        'order_date' => now(),
-                        'status' => 'draft', // langsung confirmed
-                        'total_amount' => $quotation->total_amount,
-                        'delivery_address' => $quotation->outlet->address ?? null,
-                    ]);
+                        // Step 2: Generate sales order
+                        $quotation = $this->record->load(['items', 'outlet']);
+                        $lastSo = SalesOrder::orderBy('sales_order_id', 'desc')->first()?->sales_order_id ?? 'SO55000';
+                        $nextNumber = str_pad((intval(substr($lastSo, 2)) + 1), 5, '0', STR_PAD_LEFT);
+                        $salesOrderId = 'SO' . $nextNumber;
 
-                    foreach ($quotation->items as $item) {
-                        \App\Models\SalesOrderItem::create([
+                        $salesOrder = SalesOrder::create([
                             'sales_order_id' => $salesOrderId,
-                            'part_number' => $item->sub_part_number,
-                            'quantity' => $item->quantity,
-                            'unit_price' => $item->unit_price,
-                            'subtotal' => $item->subtotal,
-                        ]);
-                    }
-
-                    // Step 3: Create Delivery Order
-                    $lastDO = DeliveryOrder::orderBy('delivery_order_id', 'desc')->first();
-                    $newDoId = 'DO' . str_pad((int) Str::after($lastDO->delivery_order_id ?? 'DO00000', 'DO') + 1, 5, '0', STR_PAD_LEFT);
-
-                    $deliveryOrder = DeliveryOrder::create([
-                        'delivery_order_id' => $newDoId,
-                        'sales_order_id' => $salesOrder->sales_order_id,
-                        'delivery_date' => now(),
-                        'status' => 'pending',
-                    ]);
-
-                    // Step 4: Create Delivery Items + Stock Reservations + Update Inventory
-                    foreach ($quotation->items as $item) {
-                        DeliveryItem::create([
-                            'delivery_order_id' => $deliveryOrder->delivery_order_id,
-                            'part_number' => $item->sub_part_number,
-                            'quantity' => $item->quantity,
+                            'customer_id' => $quotation->outlet_code,
+                            'quotation_id' => $quotation->quotation_id,
+                            'order_date' => now(),
+                            'status' => 'draft',
+                            'total_amount' => $quotation->total_amount,
+                            'delivery_address' => $quotation->outlet->address ?? null,
                         ]);
 
-                        StockReservation::create([
-                            'part_number' => $item->sub_part_number,
-                            'sales_order_id' => $salesOrder->sales_order_id,
-                            'reserved_quantity' => $item->quantity,
-                            'reservation_date' => now(),
-                            'status' => 'ACTIVE',
-                        ]);
-
-                        $inventory = Inventory::where('product_id', $item->sub_part_number)->first();
-                        if ($inventory) {
-                            $inventory->update([
-                                'quantity_reserved' => $inventory->quantity_reserved + $item->quantity,
+                        foreach ($quotation->items as $item) {
+                            SalesOrderItem::create([
+                                'sales_order_id' => $salesOrderId,
+                                'part_number' => $item->sub_part_number,
+                                'quantity' => $item->quantity,
+                                'unit_price' => $item->unit_price,
+                                'subtotal' => $item->subtotal,
                             ]);
                         }
-                    }
 
-                });
+                        // Step 3: Create Delivery Order
+                        $lastDO = DeliveryOrder::orderBy('delivery_order_id', 'desc')->first();
+                        $newDoId = 'DO' . str_pad((int) Str::after($lastDO->delivery_order_id ?? 'DO00000', 'DO') + 1, 5, '0', STR_PAD_LEFT);
 
-                Notification::make()
-                    ->title("Sales Order & Delivery Order berhasil dibuat dari Quotation {$this->record->quotation_id}")
-                    ->success()
-                    ->send();
+                        $deliveryOrder = DeliveryOrder::create([
+                            'delivery_order_id' => $newDoId,
+                            'sales_order_id' => $salesOrder->sales_order_id,
+                            'delivery_date' => now(),
+                            'status' => 'pending',
+                        ]);
 
-                $this->redirect(\App\Filament\Resources\QuotationApproveResource::getUrl());
-            }),
+                        // Step 4: Delivery items + stock reservation + inventory update
+                        foreach ($quotation->items as $item) {
+                            DeliveryItem::create([
+                                'delivery_order_id' => $deliveryOrder->delivery_order_id,
+                                'part_number' => $item->sub_part_number,
+                                'quantity' => $item->quantity,
+                            ]);
+
+                            StockReservation::create([
+                                'part_number' => $item->sub_part_number,
+                                'sales_order_id' => $salesOrder->sales_order_id,
+                                'reserved_quantity' => $item->quantity,
+                                'reservation_date' => now(),
+                                'status' => 'ACTIVE',
+                            ]);
+
+                            $inventory = Inventory::where('product_id', $item->sub_part_number)->first();
+                            if ($inventory) {
+                                $inventory->update([
+                                    'quantity_reserved' => $inventory->quantity_reserved + $item->quantity,
+                                ]);
+                            }
+                        }
+
+                        // Step 5: Generate PDF and save
+                        $pdf = \PDF::loadView('pdf.quotation', [
+                            'quotation' => $this->record->load(['items', 'outlet']),
+                            'items' => $this->record->items,
+                        ]);
+
+                        $fileName = "quotation_{$this->record->quotation_id}.pdf";
+                        $pdfPath = storage_path("app/public/{$fileName}");
+                        $pdf->save($pdfPath);
+
+                        // Step 6: Kirim email
+                        $quotation = $this->record->load(['outlet']);
+                        if ($quotation->outlet && $quotation->outlet->email) {
+                            Mail::send('emails.quotation_review', [
+                                'quotation' => $quotation
+                            ], function ($message) use ($quotation, $pdfPath) {
+                                $message->to($quotation->outlet->email)
+                                    ->subject("Quotation {$quotation->quotation_id} sedang direview")
+                                    ->attach($pdfPath);
+                            });
+                        }
+                    });
+
+                    Notification::make()
+                        ->title("Sales Order, Delivery Order, dan Quotation PDF berhasil dibuat & dikirim.")
+                        ->success()
+                        ->send();
+
+                    // Sekarang $fileName sudah bisa dipakai
+                    return redirect()->to(asset('storage/' . $fileName));
+                }),
+
 
 
             Action::make('Reject')

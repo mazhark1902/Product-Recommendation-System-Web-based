@@ -91,6 +91,69 @@
                 </div>
             </div>
         </x-filament::card>
+        {{-- Delivery Order Information --}}
+<x-filament::card>
+    <h2 class="text-xl font-bold mb-4">Delivery Order Information</h2>
+
+    @forelse($this->record->deliveryOrders as $do)
+        <div class="border rounded-lg p-4 mb-3 bg-gray-50">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <span class="font-semibold">DO Number:</span>
+                    <div>{{ $do->delivery_order_id }}</div>
+                </div>
+                <div>
+                    <span class="font-semibold">DO Date:</span>
+                    <div>{{ \Carbon\Carbon::parse($do->delivery_date)->format('d M Y') }}</div>
+                </div>
+                <div>
+                    <span class="font-semibold">Status:</span>
+                    <div>{{ ucfirst($do->status) }}</div>
+                </div>
+            </div>
+
+            {{-- Delivery Items --}}
+            <div class="mt-4">
+                <h3 class="font-semibold mb-2">Items</h3>
+                @php
+                    $deliveryItems = $do->items ?? [];
+                @endphp
+                @forelse($deliveryItems as $item)
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 border rounded p-2 mb-2 bg-white">
+                        <div>
+                            <span class="font-semibold">Part Number:</span>
+                            <div>{{ $item->part_number }}</div>
+                        </div>
+                        <div>
+                            <span class="font-semibold">Quantity:</span>
+                            <div>{{ $item->quantity }}</div>
+                        </div>
+                        <div>
+                            <span class="font-semibold">Unit Price:</span>
+                            <div>
+                                Rp {{ number_format($item->part->price ?? 0, 0, ',', '.') }}
+                            </div>
+                        </div>
+
+                        <div>
+                            <span class="font-semibold">Subtotal:</span>
+                            <div>
+                                Rp {{ number_format(($item->quantity ?? 0) * ($item->part->price ?? 0), 0, ',', '.') }}
+                            </div>
+                        </div>
+
+
+                    </div>
+                @empty
+                    <p class="text-gray-500">No delivery items found.</p>
+                @endforelse
+            </div>
+        </div>
+    @empty
+        <p class="text-gray-500">No delivery orders found.</p>
+    @endforelse
+</x-filament::card>
+
 
     </div>
 </x-filament-panels::page>

@@ -40,12 +40,21 @@ class ProductReturnSalesResource extends Resource
                     $count = ProductReturn::whereDate('created_at', today())->count() + 1;
                     return "RTN-{$today}-" . str_pad($count, 2, '0', STR_PAD_LEFT);
                 }),
-            Forms\Components\TextInput::make('sales_order_id')
-                ->label('Sales Order ID')
-                ->required()
-                ->reactive()
-                ->afterStateUpdated(fn ($state, callable $set, $get) => $set('part_number', null)),
-
+            Forms\Components\Select::make('sales_order_id')
+    ->label('Sales Order ID')
+    ->placeholder('Click & type to search Sales Order ID')
+    ->searchable()
+    ->getSearchResultsUsing(function (string $search) {
+        return \App\Models\SalesOrder::query()
+            ->where('sales_order_id', 'like', "%{$search}%")
+            ->limit(5)
+            ->pluck('sales_order_id', 'sales_order_id')
+            ->toArray();
+    })
+    ->getOptionLabelUsing(fn ($value): ?string => \App\Models\SalesOrder::find($value)?->sales_order_id)
+    ->required()
+    ->reactive()
+    ->afterStateUpdated(fn ($state, callable $set) => $set('part_number', null)),
             Forms\Components\Select::make('part_number')
                 ->label('Part Number')
                 ->options(function (callable $get) {
@@ -68,7 +77,7 @@ class ProductReturnSalesResource extends Resource
 
             Forms\Components\Select::make('refund_action')
                 ->label('Refund Action')
-                ->options(['REFUND'=>'REFUND','CREDIT_MEMO'=>'CREDIT_MEMO'])
+                ->options(['RETURN'=>'RETURN','CREDIT_MEMO'=>'CREDIT_MEMO'])
                 ->reactive()
                 ->required(),
         ]);
