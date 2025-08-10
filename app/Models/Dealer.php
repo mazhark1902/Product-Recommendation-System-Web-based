@@ -13,4 +13,10 @@ class Dealer extends Model
         'email'
         // tambahkan field lain jika perlu
     ];
+    // app/Models/Dealer.php
+public function outlets()
+{
+    return $this->hasMany(Outlet::class, 'dealer_code', 'dealer_code');
+}
+
 }

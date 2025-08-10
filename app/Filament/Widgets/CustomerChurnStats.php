@@ -13,7 +13,7 @@ class CustomerChurnStats extends BaseWidget
     use HasWidgetShield;
     protected function getStats(): array
     {
-        $today = Carbon::today();
+        $today = Carbon::create(2025, 6, 29);
 
         $data = DB::table('sales_orders')
             ->select('customer_id', DB::raw('MAX(order_date) as last_order_date'))

@@ -30,7 +30,7 @@ class LastPurchaseByCustomer extends ChartWidget
 
     protected function getData(): array
     {
-        $today = Carbon::today();
+        $today = Carbon::create(2025, 6, 29);
         $selectedDealer = $this->filter;
 
         $query = DB::table('sales_orders')

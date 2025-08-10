@@ -10,6 +10,8 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Tables\Actions\Action;
+use Filament\Infolists\Components\TextEntry;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\TextColumn;
@@ -28,7 +30,7 @@ class DealerResource extends Resource
     {
         return $form
             ->schema([
-                TextInput::Make('dealer_code')->required(),
+                TextInput::Make('dealer_code')->required()->visibleOn('create'),
                 TextInput::Make('dealer_name')->required(),
                 TextInput::Make('province')->required(),
                 TextInput::Make('email')->required(),
@@ -49,7 +51,29 @@ class DealerResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-            ])
+                Action::make('view_details')
+                ->label('View Details')
+                ->icon('heroicon-o-eye')
+                ->infolist([
+                TextEntry::make('dealer_code')->label('Dealer Code'),
+                TextEntry::make('dealer_name')->label('Dealer Name'),
+                TextEntry::make('province')->label('Province'),
+                TextEntry::make('email')->label('Email'),
+
+                // Outlets Section
+                \Filament\Infolists\Components\RepeatableEntry::make('outlets')
+                ->schema([
+                TextEntry::make('outlet_name')->label('Outlet Name'),
+                TextEntry::make('email')->label('Outlet Email'),
+                TextEntry::make('phone')->label('Phone'),
+                TextEntry::make('address')->label('Address'),
+                 ])
+                ->label('Outlets')
+                ->columns(2),
+                    ])
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Close'),
+                ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     // Tables\Actions\DeleteBulkAction::make(),
