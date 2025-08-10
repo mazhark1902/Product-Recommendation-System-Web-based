@@ -19,6 +19,7 @@ use App\Models\Dealer;
 use App\Models\SubPart;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 
 class GeneratingInvoice extends Page
@@ -148,7 +149,67 @@ public function confirmOrder()
     });
 }
 
+    public function emailRestock()
+{
+    if (empty($this->notAvailableItems)) {
+        Notification::make()
+            ->title('Tidak ada sub part yang perlu restock.')
+            ->info()
+            ->send();
+        return;
+    }
 
+    DB::transaction(function () {
+        $salesOrder = $this->record;
+
+        // Nomor dokumen restock
+        $restockId = 'RSK' . now()->format('YmdHis');
+
+        // Ambil detail sub part
+        $itemsDetail = collect($this->notAvailableItems)->map(function ($item) {
+            $subPart = \App\Models\SubPart::where('sub_part_number', $item['part_number'])->first();
+            return [
+                'part_number' => $item['part_number'],
+                'part_name' => $subPart->sub_part_name ?? '-',
+                'required' => $item['required'],
+                'available' => $item['available'],
+                'shortage' => $item['required'] - $item['available'],
+            ];
+        });
+
+        // Generate PDF
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.subpart_restock', [
+            'restockId' => $restockId,
+            'salesOrder' => $salesOrder,
+            'items' => $itemsDetail,
+            'createdAt' => now(),
+        ])->setPaper('A4');
+
+        $pdfFileName = "subpart_restock_{$restockId}.pdf";
+        $pdfPath = storage_path("app/public/{$pdfFileName}");
+        $pdf->save($pdfPath);
+
+        // Kirim email
+        \Illuminate\Support\Facades\Mail::send('emails.subpart_restock_email', [
+            'salesOrder' => $salesOrder,
+            'restockId' => $restockId,
+            'items' => $itemsDetail,
+        ], function ($message) use ($pdfPath, $pdfFileName) {
+            $message->to('raihan.almi@student.president.ac.id')
+                ->cc(['mazhar1902@gmail.com', 'hadi13november@gmail.com'])
+                ->subject('SubPart Restock Notification')
+                ->attach($pdfPath);
+        });
+
+        // Notifikasi sukses
+        Notification::make()
+            ->title("Berhasil mengirim email SubPart Restock: {$restockId}")
+            ->success()
+            ->send();
+
+        $this->redirect(SalesOrderResource::getUrl('index'));
+    });
+}
     public function rejectOrder()
     {
         $this->record->update(['status' => 'rejected']);
@@ -158,6 +219,6 @@ public function confirmOrder()
 
     public function checkStock()
     {
-        $this->redirect(SalesOrderResource::getUrl('check-availability', ['record' => $this->record->getKey()]));
+        $this->redirect(SalesOrderResource::getUrl('generating-invoice', ['record' => $this->record->getKey()]));
     }
 }

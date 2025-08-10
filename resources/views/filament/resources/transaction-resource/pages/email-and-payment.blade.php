@@ -13,7 +13,7 @@
                     @if ($record->proof)
                         <a href="{{ Storage::url($record->proof) }}" target="_blank" class="text-blue-500 underline">Lihat Bukti</a>
                     @else
-                        <span class="text-gray-500 italic">Belum ada</span>
+                        <span class="text-gray-500 italic">Not Available</span>
                     @endif
                 </td></tr>
             </table>
@@ -31,12 +31,12 @@
     @csrf
     <input type="hidden" name="transaction_id" value="{{ $record->id }}">
 
-    <label class="block font-medium" for="proof">Upload Bukti Pembayaran</label>
+    <label class="block font-medium" for="proof">Upload Proof Payment</label>
     <input type="file" name="proof" accept="image/png,image/jpeg" class="block w-full border p-2 rounded" required>
 
-    <button type="submit" class="bg-blue-500 text-black px-4 py-2 rounded hover:bg-blue-600">
-        Simpan Bukti
-    </button>
+<x-filament::button type="submit" color="primary">
+    Save Proof
+</x-filament::button>
 </form>
 
         </div>

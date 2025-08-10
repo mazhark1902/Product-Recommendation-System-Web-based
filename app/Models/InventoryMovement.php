@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class InventoryMovement extends Model
 {
@@ -20,5 +21,12 @@ class InventoryMovement extends Model
         'batch_number',
     ];
 
-
+    /**
+     * Menambahkan relasi ke model SubPart.
+     * Ini akan memungkinkan kita untuk menampilkan nama produk.
+     */
+    public function subPart(): BelongsTo
+    {
+        return $this->belongsTo(SubPart::class, 'product_id', 'sub_part_number');
+    }
 }
