@@ -2,41 +2,49 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\DeliveryConfirmationResource\Pages;
-use App\Models\DeliveryOrder;
+use App\Filament\Resources\DeliveryOrderInventoryResource\Pages;
+use App\Filament\Resources\DeliveryOrderInventoryResource\RelationManagers;
+use App\Models\DeliveryOrderInventory;
+use Filament\Forms;
+use Filament\Forms\Form;
+use Filament\Resources\Resource;
+use Filament\Tables;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
+
+
 use App\Models\Inventory;
 use App\Models\InventoryMovement;
 use App\Models\StockReservation;
-use Filament\Resources\Resource;
-use Filament\Tables\Table;
+
+
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Notifications\Notification;
-use Illuminate\Database\Eloquent\Builder;
+
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\RepeatableEntry;
-use Filament\Forms;
+
 use Filament\Tables\Filters\SelectFilter;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use BezhanSalleh\FilamentShield\Traits\HasShieldFormComponents;
 
-class DeliveryConfirmationResource extends Resource
+class DeliveryOrderInventoryResource extends Resource
 {
-    use HasShieldFormComponents;
-    protected static ?string $model = DeliveryOrder::class;
+    protected static ?string $model = DeliveryOrderInventory::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-truck';
     protected static ?string $navigationGroup = 'Inventory';
-    protected static ?string $navigationLabel = 'Delivery Orders';
+    protected static ?string $navigationLabel = 'Delivery Orders Inventory';
     protected static ?int $navigationSort = 3;
-
     public static function getPluralModelLabel(): string
     {
-        return 'Delivery Orders';
+        return 'Delivery Orders Inventory';
     }
 
     public static function table(Table $table): Table
@@ -57,8 +65,8 @@ class DeliveryConfirmationResource extends Resource
             ->actions([
                 Action::make('print_delivery_note')
                     ->label('Print Delivery Note')->icon('heroicon-o-printer')->color('gray')
-                    ->url(fn (DeliveryOrder $record) => route('print.delivery.note', $record), true)
-                    ->visible(fn(DeliveryOrder $record) => $record->status === 'delivered'),
+                    ->url(fn (DeliveryOrderInventory $record) => route('print.delivery.note', $record), true)
+                    ->visible(fn(DeliveryOrderInventory $record) => $record->status === 'delivered'),
 
                 Action::make('view_details')
                     ->label('View Details')->icon('heroicon-o-eye')->color('gray')
@@ -85,7 +93,7 @@ class DeliveryConfirmationResource extends Resource
                     ->label('Check Availability')
                     ->icon('heroicon-o-magnifying-glass')
                     ->color('info')
-                    ->action(function (DeliveryOrder $record) {
+                    ->action(function (DeliveryOrderInventory $record) {
                         $record->load('items.part');
                         $insufficientItems = [];
 
@@ -113,7 +121,7 @@ class DeliveryConfirmationResource extends Resource
                             Notification::make()->title('Insufficient Stock!')->danger()->body($message)->persistent()->send();
                         }
                     })
-                    ->visible(fn(DeliveryOrder $record) => $record->status === 'pending'),
+                    ->visible(fn(DeliveryOrderInventory $record) => $record->status === 'pending'),
 
                 // --- Tombol Tahap 2: Muncul hanya saat status 'ready' ---
                 Action::make('confirm_delivery')
@@ -127,7 +135,7 @@ class DeliveryConfirmationResource extends Resource
                     ])
                     ->modalHeading('Confirm Goods Shipment')
                     ->modalDescription('You are about to change the status to "Delivered". Continue?')
-                    ->action(function (DeliveryOrder $record, array $data) {
+                    ->action(function (DeliveryOrderInventory $record, array $data) {
                         // Logika yang sudah ada sebelumnya tetap dipertahankan
                         try {
                             DB::transaction(function () use ($record, $data) {
@@ -173,16 +181,26 @@ class DeliveryConfirmationResource extends Resource
                             Notification::make()->title('Process Failed')->body($e->getMessage())->danger()->send();
                         }
                     })
-                    ->visible(fn(DeliveryOrder $record) => $record->status === 'ready'),
+                    ->visible(fn(DeliveryOrderInventory $record) => $record->status === 'ready'),
             ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            //
+        ];
     }
 
     public static function getPages(): array
     {
-        return ['index' => Pages\ListDeliveryConfirmations::route('/')];
+        return [
+            'index' => Pages\ListDeliveryOrderInventories::route('/'),
+            // 'create' => Pages\CreateDeliveryOrderInventory::route('/create'),
+            // 'edit' => Pages\EditDeliveryOrderInventory::route('/{record}/edit'),
+        ];
     }
-    
-    public static function canCreate(): bool
+        public static function canCreate(): bool
     {
         return false;
     }

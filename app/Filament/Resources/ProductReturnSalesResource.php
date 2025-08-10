@@ -3,32 +3,37 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProductReturnSalesResource\Pages;
-use App\Models\ProductReturn;
+use App\Filament\Resources\ProductReturnSalesResource\RelationManagers;
+use App\Models\ProductReturnSales;
+use Filament\Forms;
+use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Forms;
+use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use BezhanSalleh\FilamentShield\Traits\HasShieldFormComponents;
 
+
 class ProductReturnSalesResource extends Resource
 {
-    
-    use HasShieldFormComponents;
+      use HasShieldFormComponents;
+    protected static ?string $model = ProductReturnSales::class;
 
-    protected static ?string $model = ProductReturn::class;
-    // protected static ?string $navigationIcon = 'heroicon-o-refresh';
+   
     protected static ?string $navigationGroup = 'Sales';
     
     protected static ?int $navigationSort = 5;
     protected static ?string $navigationIcon = 'heroicon-o-arrow-uturn-left';
 
-    public static function canCreate(): bool
+        public static function canCreate(): bool
 {
     return true;
 }
 
-    public static function form(Forms\Form $form): Forms\Form
+public static function form(Forms\Form $form): Forms\Form
     {
         return $form->schema([
             Forms\Components\TextInput::make('return_id')
@@ -37,15 +42,24 @@ class ProductReturnSalesResource extends Resource
                 ->dehydrated()
                 ->default(function () {
                     $today = now()->format('Ymd');
-                    $count = ProductReturn::whereDate('created_at', today())->count() + 1;
+                    $count = ProductReturnSales::whereDate('created_at', today())->count() + 1;
                     return "RTN-{$today}-" . str_pad($count, 2, '0', STR_PAD_LEFT);
                 }),
-            Forms\Components\TextInput::make('sales_order_id')
-                ->label('Sales Order ID')
-                ->required()
-                ->reactive()
-                ->afterStateUpdated(fn ($state, callable $set, $get) => $set('part_number', null)),
-
+            Forms\Components\Select::make('sales_order_id')
+    ->label('Sales Order ID')
+    ->placeholder('Click & type to search Sales Order ID')
+    ->searchable()
+    ->getSearchResultsUsing(function (string $search) {
+        return \App\Models\SalesOrder::query()
+            ->where('sales_order_id', 'like', "%{$search}%")
+            ->limit(5)
+            ->pluck('sales_order_id', 'sales_order_id')
+            ->toArray();
+    })
+    ->getOptionLabelUsing(fn ($value): ?string => \App\Models\SalesOrder::find($value)?->sales_order_id)
+    ->required()
+    ->reactive()
+    ->afterStateUpdated(fn ($state, callable $set) => $set('part_number', null)),
             Forms\Components\Select::make('part_number')
                 ->label('Part Number')
                 ->options(function (callable $get) {
@@ -68,11 +82,12 @@ class ProductReturnSalesResource extends Resource
 
             Forms\Components\Select::make('refund_action')
                 ->label('Refund Action')
-                ->options(['REFUND'=>'REFUND','CREDIT_MEMO'=>'CREDIT_MEMO'])
+                ->options(['RETURN'=>'RETURN','CREDIT_MEMO'=>'CREDIT_MEMO'])
                 ->reactive()
                 ->required(),
         ]);
     }
+
 
     public static function table(Tables\Table $table): Tables\Table
     {
@@ -89,13 +104,19 @@ class ProductReturnSalesResource extends Resource
         ]);
     }
 
+    public static function getRelations(): array
+    {
+        return [
+            //
+        ];
+    }
+
     public static function getPages(): array
     {
         return [
-           'index' => Pages\ListProductReturnSales::route('/'),
+            'index' => Pages\ListProductReturnSales::route('/'),
             'create' => Pages\CreateProductReturnSales::route('/create'),
             'edit' => Pages\EditProductReturnSales::route('/{record}/edit'),
-            // 'view' => Pages\ViewProductReturnSales::route('/{record}'),
         ];
     }
 }

@@ -2,11 +2,11 @@
 
 namespace App\Filament\Widgets\Inventory;
 
-use App\Models\DeliveryOrder;
+use App\Models\DeliveryOrderInventory;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
-use App\Filament\Resources\DeliveryOrderResource;
+use App\Filament\Resources\DeliveryOrderInventoryResource;
 use Filament\Tables\Filters\SelectFilter; // Import SelectFilter
 use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 
@@ -22,7 +22,7 @@ class PendingShipmentsTable extends BaseWidget
         // and have a relationship with SalesOrder.
         return $table
             ->query(
-                DeliveryOrder::query()
+                DeliveryOrderInventory::query()
                     ->whereIn('status', ['pending', 'ready'])
                     ->orderBy('delivery_date', 'desc')
             )
@@ -60,11 +60,11 @@ class PendingShipmentsTable extends BaseWidget
             ])
 
             ->actions([
-                Tables\Actions\Action::make('viewDelivery')
-                    ->label('View Details')
-                    ->icon('heroicon-o-truck')
-                    // Redirect to the DeliveryOrder resource if it exists
-                    ->url(fn (DeliveryOrder $record): string => DeliveryOrderResource::getUrl('view', ['record' => $record->id])),
+                // Tables\Actions\Action::make('viewDelivery')
+                //     ->label('View Details')
+                //     ->icon('heroicon-o-truck')
+                //     // Redirect to the DeliveryOrder resource if it exists
+                //     ->url(fn (DeliveryOrderInventory $record): string => DeliveryOrderInventoryResource::getUrl('view', ['record' => $record->id])),
             ])
             ->emptyStateHeading('No pending shipments');
     }

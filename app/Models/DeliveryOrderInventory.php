@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class DeliveryOrder extends Model
+class DeliveryOrderInventory extends Model
 {
-    protected $table = 'delivery_orders'; // Pastikan nama tabel sesuai dengan database
+        protected $table = 'delivery_orders'; // Pastikan nama tabel sesuai dengan database
 
     protected $fillable = [
         'delivery_order_id',
@@ -25,9 +25,4 @@ class DeliveryOrder extends Model
     {
         return $this->belongsTo(SalesOrder::class, 'sales_order_id', 'sales_order_id');
     }
-
-    // public function inventoryMovements()
-    // {
-    //     return $this->hasMany(Inventory::class, 'reference_id', 'delivery_order_id');
-    // }   
 }

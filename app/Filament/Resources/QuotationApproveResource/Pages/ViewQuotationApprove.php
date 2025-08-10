@@ -10,7 +10,7 @@ use Filament\Resources\Pages\ViewRecord;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use App\Models\Inventory;
-use App\Models\DeliveryOrder;
+use App\Models\DeliveryOrderSales;
 use App\Models\DeliveryItem;
 use App\Models\StockReservation;
 use App\Models\Transaction;
@@ -62,10 +62,10 @@ class ViewQuotationApprove extends ViewRecord
                     }
 
                     // Step 3: Create Delivery Order
-                    $lastDO = DeliveryOrder::orderBy('delivery_order_id', 'desc')->first();
+                    $lastDO = DeliveryOrderSales::orderBy('delivery_order_id', 'desc')->first();
                     $newDoId = 'DO' . str_pad((int) Str::after($lastDO->delivery_order_id ?? 'DO00000', 'DO') + 1, 5, '0', STR_PAD_LEFT);
 
-                    $deliveryOrder = DeliveryOrder::create([
+                    $deliveryOrder = DeliveryOrderSales::create([
                         'delivery_order_id' => $newDoId,
                         'sales_order_id' => $salesOrder->sales_order_id,
                         'delivery_date' => now(),

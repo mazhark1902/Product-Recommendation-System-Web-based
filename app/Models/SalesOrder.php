@@ -27,7 +27,10 @@ class SalesOrder extends Model
     {
         return $this->belongsTo(OutletDealer::class, 'customer_id', 'outlet_code');
     }
-    
+
+    public function deliveryOrders()
+    {
+        return $this->hasMany(DeliveryOrderSales::class, 'sales_order_id', 'sales_order_id');}
 
     public function dealer()
     {
@@ -67,6 +70,7 @@ class SalesOrder extends Model
     {
         return $this->hasOne(Transaction::class, 'sales_order_id', 'sales_order_id');
     }
+    
 
 }
 
