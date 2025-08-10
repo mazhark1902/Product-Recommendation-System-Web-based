@@ -5,7 +5,20 @@ namespace App\Filament\Pages;
 use Filament\Pages\Page;
 use App\Filament\Widgets\TopCustomerBarChart;
 use App\Filament\Widgets\SalesChart;
+use App\Filament\Widgets\AdminDashboardSales;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
+use App\Filament\Widgets\AdminDashboardInventory;
+use App\Filament\Widgets\AdminDashboardCustomer;
+use App\Filament\Widgets\RevenueMonthLineChart;
+// use App\Filament\Widgets\MostReturnedProductsChart;
+use App\Filament\Widgets\churnriskchart;
+use App\Filament\Widgets\OrderFrequencyByCustomer;
+
+
+
+
+
+
 
 class AdminDashboard extends Page
 {
@@ -18,8 +31,15 @@ class AdminDashboard extends Page
     public function getHeaderWidgets(): array
     {
         return [
+            AdminDashboardSales::class,
+            AdminDashboardInventory::class,
+            AdminDashboardCustomer::class,
+            RevenueMonthLineChart::class,
             TopCustomerBarChart::class,
-            SalesChart::class,
+            // MostReturnedProductsChart::class,
+            OrderFrequencyByCustomer::class,
+            churnriskchart::class,
+
             
         ];
     }

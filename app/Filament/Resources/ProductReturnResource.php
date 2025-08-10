@@ -3,7 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProductReturnResource\Pages;
-use App\Models\DeliveryOrder;
+use App\Models\DeliveryOrderInventory;
 use App\Models\DeliveryItem;
 use App\Models\ProductReturn;
 use App\Models\Inventory;
@@ -49,7 +49,7 @@ class ProductReturnResource extends Resource
                 TextColumn::make('quantity')->label('Qty'),
                 TextColumn::make('return_date')->label('Return Date')->date()->sortable(),
                 BadgeColumn::make('refund_action')->label('Action')
-                    ->colors(['info' => 'REFUND', 'primary' => 'CREDIT_MEMO']),
+                    ->colors(['info' => 'RETURN', 'primary' => 'CREDIT_MEMO']),
                 BadgeColumn::make('status')
                     ->label('Process Status')
                     ->getStateUsing(fn (ProductReturn $record): string => $record->inventory_movements_count > 0 ? 'Processed' : 'Pending')
@@ -62,7 +62,7 @@ class ProductReturnResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('condition')->options(['GOOD' => 'Good', 'DAMAGED' => 'Damaged']),
-                SelectFilter::make('refund_action')->options(['REFUND' => 'Refund', 'CREDIT_MEMO' => 'Credit Memo']),
+                SelectFilter::make('refund_action')->options(['RETURN' => 'Return', 'CREDIT_MEMO' => 'Credit Memo']),
             ])
             ->actions([
                 Action::make('view_details')
@@ -76,7 +76,7 @@ class ProductReturnResource extends Resource
                         TextEntry::make('return_date')->date(),
                         TextEntry::make('condition')->badge()->placeholder('Not Set')->colors(['success' => 'GOOD', 'danger' => 'DAMAGED']),
                         TextEntry::make('reason'),
-                        TextEntry::make('refund_action')->badge()->colors(['info' => 'REFUND', 'primary' => 'CREDIT_MEMO']),
+                        TextEntry::make('refund_action')->badge()->colors(['info' => 'RETURN', 'primary' => 'CREDIT_MEMO']),
                         TextEntry::make('status')->label('Process Status')->badge()
                             ->getStateUsing(fn (ProductReturn $record): string => $record->inventory_movements_count > 0 ? 'Processed' : 'Pending')
                             ->colors(['warning' => 'Pending', 'success' => 'Processed']),
@@ -115,7 +115,7 @@ class ProductReturnResource extends Resource
                         Forms\Components\Placeholder::make('info')
                              ->label('Next Step')
                              ->content('A new Delivery Order will be created to send the replacement item to the customer.')
-                             ->visible(fn (Model $record) => $record->refund_action === 'REFUND'),
+                             ->visible(fn (Model $record) => $record->refund_action === 'RETURN'),
                     ])
                     ->action(function (ProductReturn $record, array $data) {
                         try {
@@ -132,12 +132,12 @@ class ProductReturnResource extends Resource
                                     $inventory->increment('quantity_damaged', 'quantity');
                                 }
                                 InventoryMovement::create(['inventory_movement_id' => 'IM-' . strtoupper(Str::random(8)),'product_id' => $record->part_number,'movement_type' => 'IN','quantity' => $record->quantity,'movement_date' => now(),'reference_type' => 'PRODUCT_RETURN','reference_id' => $record->id,'notes' => "Stock in from return #{$record->return_id}, Final Condition: {$data['final_condition']}",]);
-                                if ($record->refund_action === 'REFUND') {
+                                if ($record->refund_action === 'RETURN') {
                                     $originalSalesOrder = $record->salesOrder()->with('customer')->first();
                                     if(!$originalSalesOrder || !$originalSalesOrder->customer) { throw new \Exception("Customer data not found for original Sales Order."); }
-                                    $lastDO = DeliveryOrder::orderBy('delivery_order_id', 'desc')->first();
+                                    $lastDO = DeliveryOrderInventory::orderBy('delivery_order_id', 'desc')->first();
                                     $newDoId = 'DO' . str_pad((int) Str::after($lastDO->delivery_order_id ?? 'DO00000', 'DO') + 1, 5, '0', STR_PAD_LEFT);
-                                    $deliveryOrder = DeliveryOrder::create(['delivery_order_id' => $newDoId,'sales_order_id' => $record->sales_order_id,'delivery_date' => now(),'status' => 'pending','notes' => 'Replacement for return ' . $record->return_id,]);
+                                    $deliveryOrder = DeliveryOrderInventory::create(['delivery_order_id' => $newDoId,'sales_order_id' => $record->sales_order_id,'delivery_date' => now(),'status' => 'pending','notes' => 'Replacement for return ' . $record->return_id,]);
                                     DeliveryItem::create(['delivery_order_id' => $deliveryOrder->delivery_order_id,'part_number' => $record->part_number,'quantity' => $record->quantity,]);
                                 }
                             });

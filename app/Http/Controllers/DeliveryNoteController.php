@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\DeliveryOrder;
+use App\Models\DeliveryOrderInventory;
 use Barryvdh\DomPDF\Facade\Pdf; // <-- Import facade PDF
 
 class DeliveryNoteController extends Controller
 {
-    public function print(DeliveryOrder $record)
+    public function print(DeliveryOrderInventory $record)
     {
         // Eager load relasi untuk menghindari query N+1 di dalam view
         $record->load(['items.part', 'salesOrder.outlet.dealer']);

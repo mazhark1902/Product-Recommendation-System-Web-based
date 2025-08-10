@@ -31,7 +31,7 @@ class InventoryMovementPolicy
      */
     public function create(User $user): bool
     {
-        return false;
+        return $user->can('{{ Create }}');
     }
 
     /**
@@ -39,7 +39,7 @@ class InventoryMovementPolicy
      */
     public function update(User $user, InventoryMovement $inventoryMovement): bool
     {
-        return false;
+        return $user->can('{{ Update }}');
     }
 
     /**
@@ -47,7 +47,7 @@ class InventoryMovementPolicy
      */
     public function delete(User $user, InventoryMovement $inventoryMovement): bool
     {
-        return false;
+        return $user->can('{{ Delete }}');
     }
 
     /**
@@ -55,7 +55,7 @@ class InventoryMovementPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return false;
+        return $user->can('{{ DeleteAny }}');
     }
 
     /**
@@ -63,7 +63,7 @@ class InventoryMovementPolicy
      */
     public function forceDelete(User $user, InventoryMovement $inventoryMovement): bool
     {
-        return false;
+        return $user->can('{{ ForceDelete }}');
     }
 
     /**
@@ -71,7 +71,7 @@ class InventoryMovementPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return false;
+        return $user->can('{{ ForceDeleteAny }}');
     }
 
     /**
@@ -79,7 +79,7 @@ class InventoryMovementPolicy
      */
     public function restore(User $user, InventoryMovement $inventoryMovement): bool
     {
-        return false;
+        return $user->can('{{ Restore }}');
     }
 
     /**
@@ -87,7 +87,7 @@ class InventoryMovementPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return false;
+        return $user->can('{{ RestoreAny }}');
     }
 
     /**
@@ -95,7 +95,7 @@ class InventoryMovementPolicy
      */
     public function replicate(User $user, InventoryMovement $inventoryMovement): bool
     {
-        return false;
+        return $user->can('{{ Replicate }}');
     }
 
     /**
@@ -103,6 +103,6 @@ class InventoryMovementPolicy
      */
     public function reorder(User $user): bool
     {
-        return false;
+        return $user->can('{{ Reorder }}');
     }
 }
