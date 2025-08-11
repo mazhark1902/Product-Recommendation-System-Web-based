@@ -138,14 +138,32 @@ public function confirmOrder()
             });
         }
 
-        // 5. Notifikasi sukses
-        Notification::make()
-            ->title("Successfully generated: {$transaction->invoice_id} & sent to email: {$dealerEmail}")
-            ->success()
-            ->send();
+            $pdfPath = storage_path('app/public/invoice_' . $transaction->invoice_id . '.pdf');
+            $pdf->save($pdfPath);
 
-        // 6. Redirect ke halaman index SalesOrderResource
-        $this->redirect(SalesOrderResource::getUrl('index'));
+            // Kirim email
+            $dealerEmail = $salesOrder->dealer->email ?? null;
+            if ($dealerEmail) {
+                Mail::send('emails.invoice_notification', [
+                    'transaction' => $transaction,
+                    'tableData' => $this->tableData,
+                    'tableTotal' => $this->tableTotal
+                ], function ($message) use ($dealerEmail, $pdfPath, $transaction) {
+                    $message->to($dealerEmail)
+                            ->subject('Invoice ' . $transaction->invoice_id)
+                            ->attach($pdfPath);
+                });
+            }
+
+            // Notifikasi sukses + buka PDF
+            Notification::make()
+                ->title("Successfully generated: {$transaction->invoice_id} & sent to email: {$dealerEmail}")
+                ->success()
+                ->send();
+
+            // Redirect langsung ke file PDF
+            return redirect(Storage::url('invoice_' . $transaction->invoice_id . '.pdf'));
+
     });
 }
 

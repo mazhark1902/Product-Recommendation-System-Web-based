@@ -4,18 +4,44 @@
     <meta charset="UTF-8">
     <title>Invoice {{ $transaction->invoice_id }}</title>
     <style>
-        body { font-family: DejaVu Sans, sans-serif; font-size: 12px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        body { font-family: DejaVu Sans, sans-serif; font-size: 12px; color: #333; }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #004085;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .header h1 { margin: 0; color: #004085; }
+        .company-info, .dealer-info {
+            font-size: 12px;
+            margin-bottom: 15px;
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { border: 1px solid #000; padding: 6px; }
-        th { background-color: #f2f2f2; }
+        th { background-color: #f0f0f0; }
         .text-right { text-align: right; }
+        .total { font-weight: bold; font-size: 14px; }
     </style>
 </head>
 <body>
-    <h2>Invoice</h2>
-    <p><strong>Invoice ID:</strong> {{ $transaction->invoice_id }}</p>
-    <p><strong>Sales Order ID:</strong> {{ $transaction->sales_order_id }}</p>
-    <p><strong>Date:</strong> {{ $transaction->invoice_date }}</p>
+    <div class="header">
+        <h1>INVOICE</h1>
+        <p>Invoice ID: {{ $transaction->invoice_id }}</p>
+    </div>
+
+    <div class="company-info">
+        <strong>Your Company Name</strong><br>
+        Address Line 1<br>
+        Address Line 2<br>
+        Phone: (021) 123-4567
+    </div>
+
+    <div class="dealer-info">
+        <strong>Bill To:</strong><br>
+        {{ $transaction->salesOrder->dealer->name ?? '-' }}<br>
+        {{ $transaction->salesOrder->dealer->address ?? '-' }}<br>
+        Email: {{ $transaction->salesOrder->dealer->email ?? '-' }}
+    </div>
 
     <table>
         <thead>
@@ -38,6 +64,6 @@
         </tbody>
     </table>
 
-    <h3 class="text-right">Total: Rp {{ number_format($tableTotal, 0, ',', '.') }}</h3>
+    <p class="text-right total">Total: Rp {{ number_format($tableTotal, 0, ',', '.') }}</p>
 </body>
 </html>
