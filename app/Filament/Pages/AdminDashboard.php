@@ -10,7 +10,7 @@ use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use App\Filament\Widgets\AdminDashboardInventory;
 use App\Filament\Widgets\AdminDashboardCustomer;
 use App\Filament\Widgets\RevenueMonthLineChart;
-// use App\Filament\Widgets\MostReturnedProductsChart;
+use App\Filament\Widgets\Inventory\MostReturnedProductsChart;
 use App\Filament\Widgets\churnriskchart;
 use App\Filament\Widgets\OrderFrequencyByCustomer;
 
@@ -36,8 +36,8 @@ class AdminDashboard extends Page
             AdminDashboardCustomer::class,
             RevenueMonthLineChart::class,
             TopCustomerBarChart::class,
-            // MostReturnedProductsChart::class,
-            OrderFrequencyByCustomer::class,
+            MostReturnedProductsChart::class,
+            // OrderFrequencyByCustomer::class,
             churnriskchart::class,
 
             
