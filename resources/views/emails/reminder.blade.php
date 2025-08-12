@@ -1,55 +1,127 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Reminder Dealer</title>
+    <meta charset="UTF-8">
+    <title>Payment Reminder - {{ $transaction->invoice_id }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            color: #333;
+            line-height: 1.6;
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .container {
+            background: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            max-width: 700px;
+            margin: auto;
+        }
+        .header {
+            border-bottom: 2px solid #004085;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            color: #004085;
+            font-size: 22px;
+        }
+        .greeting {
+            font-size: 16px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+        }
+        th {
+            background: #f0f0f0;
+            text-align: left;
+        }
+        .total {
+            font-weight: bold;
+            color: #d9534f;
+        }
+        .footer {
+            margin-top: 25px;
+            font-size: 12px;
+            color: #777;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
-    <h1>Reminder for Payment</h1>
-    <p>Dear {{ $transaction->salesOrder->outlet->outlet_name }},</p>
-    <p>Please find below the details of the transaction:</p>
+<div class="container">
+    <div class="header">
+        <h1>Payment Reminder</h1>
+        <p><strong>Date:</strong> {{ now()->format('d M Y') }}</p>
+    </div>
 
-@php
-    $credit = $creditAmount ?? 0;
-    $total = $transaction->total_amount;
+    <p class="greeting">Dear {{ $transaction->salesOrder->outlet->outlet_name ?? 'Valued Customer' }},</p>
 
-    if ($credit >= $total) {
-        $adjustedTotal = 0;
-        $isCoveredByCredit = true;
-    } else {
-        $adjustedTotal = $total - $credit;
-        $isCoveredByCredit = false;
-    }
-@endphp
+    <p>
+        This is a friendly reminder regarding your outstanding payment.  
+        Please find the transaction details below:
+    </p>
 
+    @php
+        $credit = $creditAmount ?? 0;
+        $total = $transaction->total_amount;
 
-    <table border="1" cellpadding="10">
+        if ($credit >= $total) {
+            $adjustedTotal = 0;
+            $isCoveredByCredit = true;
+        } else {
+            $adjustedTotal = $total - $credit;
+            $isCoveredByCredit = false;
+        }
+    @endphp
+
+    <table>
         <thead>
-            <tr>
-                <th>Invoice ID</th>
-                <th>Sales Order ID</th>
-                <th>Total Amount</th>
-                <th>Status</th>
-            </tr>
+        <tr>
+            <th>Invoice ID</th>
+            <th>Sales Order ID</th>
+            <th>Total Amount</th>
+            <th>Status</th>
+        </tr>
         </thead>
         <tbody>
-            <tr>
-                <td>{{ $transaction->invoice_id }}</td>
-                <td>{{ $transaction->sales_order_id }}</td>
-                <td>
-                Rp{{ number_format($adjustedTotal, 2) }}
+        <tr>
+            <td>{{ $transaction->invoice_id }}</td>
+            <td>{{ $transaction->sales_order_id }}</td>
+            <td>
+                Rp {{ number_format($adjustedTotal, 0, ',', '.') }}
                 @if ($credit > 0)
-                    <br><small>Credit: Rp{{ number_format($credit, 2) }}</small>
+                    <br><small>Credit Used: Rp {{ number_format($credit, 0, ',', '.') }}</small>
                     @if ($isCoveredByCredit)
-                        <br><small><strong>Status: Lunas (covered by credit)</strong></small>
+                        <br><strong style="color:green;">Paid in full using Credit Memo</strong>
                     @endif
                 @endif
-                </td>
-
-                <td>{{ ucfirst($transaction->status) }}</td>
-            </tr>
+            </td>
+            <td>{{ ucfirst($transaction->status) }}</td>
+        </tr>
         </tbody>
     </table>
 
-    <p>Please reply to this email with the payment proof.</p>
+    <p>
+        Please make the payment at your earliest convenience or reply to this email with your payment proof.  
+        The invoice document is attached for your reference.
+    </p>
+
+    <p>Thank you for your cooperation.</p>
+
+    <div class="footer">
+        &copy; {{ date('Y') }} PT XYZ. All rights reserved.
+    </div>
+</div>
 </body>
 </html>

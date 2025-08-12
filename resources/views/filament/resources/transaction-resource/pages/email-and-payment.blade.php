@@ -1,4 +1,6 @@
+
 <x-filament::page>
+    
     <div class="space-y-6">
         <h2 class="text-xl font-bold">Email & Payment for Invoice: {{ $record->invoice_id }}</h2>
 

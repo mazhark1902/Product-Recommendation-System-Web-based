@@ -79,7 +79,7 @@
 
         <!-- BODY -->
         <div class="body">
-            <p>Dear <span class="highlight">{{ $transaction->salesOrder->dealer->name ?? 'Valued Dealer' }}</span>,</p>
+            <p>Dear <span class="highlight">{{ $transaction->salesOrder->outlet->outlet_name ?? 'Valued outlet' }}</span>,</p>
             <p>We are pleased to inform you that your invoice has been generated with the following details:</p>
 
             <table>
@@ -106,6 +106,13 @@
             <div class="total">
                 Total: Rp {{ number_format($tableTotal, 0, ',', '.') }}
             </div>
+
+            @if($oldCreditMemo > 0)
+    <p>Old Credit Memo: Rp {{ number_format($oldCreditMemo, 0, ',', '.') }}</p>
+    <p>Credit Memo Used: Rp {{ number_format($creditMemoUsed, 0, ',', '.') }}</p>
+    <p>Current Credit Memo: Rp {{ number_format($currentCreditMemo, 0, ',', '.') }}</p>
+    <h3>Payable Amount: Rp {{ number_format($payableAmount, 0, ',', '.') }}</h3>
+@endif
 
             <p>Please find the attached PDF for the full invoice details.</p>
             <p>If you have any questions, contact our Finance Department at <a href="mailto:support@company.com">support@company.com</a>.</p>

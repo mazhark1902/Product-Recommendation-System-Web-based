@@ -23,6 +23,13 @@ use Livewire\WithFileUploads;
 use Filament\Forms\Contracts\HasForms;
 use App\Models\CreditMemos;
 use Illuminate\Support\Facades\DB; // <- tambah DB
+use Barryvdh\DomPDF\Facade\Pdf; // tambahkan di atas
+use App\Models\SalesOrder;
+use App\Models\SalesOrderItem;
+use App\Models\DeliveryOrder;
+use App\Models\DeliveryItem;
+use App\Models\SubPart;
+
 
 class EmailAndPayment extends Page implements HasForms
 {
@@ -88,24 +95,114 @@ class EmailAndPayment extends Page implements HasForms
                         return;
                     }
 
+                    // --- Hitung oldCreditMemo (semua credit memo ISSUED untuk customer/outlet) ---
+                    $oldCreditMemo = \App\Models\CreditMemos::join(
+                            'product_returns', 'credit_memos.return_id', '=', 'product_returns.return_id'
+                        )
+                        ->join('sales_orders', 'product_returns.sales_order_id', '=', 'sales_orders.sales_order_id')
+                        ->where('sales_orders.customer_id', $salesOrder->customer_id)
+                        ->where('credit_memos.status', 'ISSUED')
+                        ->sum('credit_memos.amount');
+
+                    // --- Hitung currentCreditMemo (credit memo yang berasal dari return untuk sales order ini) ---
+                    $currentCreditMemo = \App\Models\CreditMemos::join(
+                            'product_returns', 'credit_memos.return_id', '=', 'product_returns.return_id'
+                        )
+                        ->where('product_returns.sales_order_id', $salesOrder->sales_order_id)
+                        ->sum('credit_memos.amount');
+
+                    // --- Build tableData (nama produk dari sub_parts, delivered qty dari delivery_items) ---
+                    $tableData = [];
+                    $tableTotal = 0;
+
+                    $soItems = SalesOrderItem::where('sales_order_id', $salesOrder->sales_order_id)->get();
+
+                    foreach ($soItems as $item) {
+                        // ambil nama & harga dari sub_parts kalau ada
+                        $subPart = SubPart::where('sub_part_number', $item->part_number)->first();
+                        $productName = $subPart ? ($subPart->sub_part_name ?? $item->part_number) : $item->part_number;
+                        $unitPrice = $subPart ? (float) ($subPart->price ?? $item->unit_price ?? 0) : (float) ($item->unit_price ?? 0);
+
+                        // hitung delivered qty dari delivery_orders yang status 'delivered'
+                        $deliveredQty = DeliveryItem::whereIn('delivery_order_id', function ($q) use ($salesOrder) {
+                                $q->select('delivery_order_id')
+                                  ->from('delivery_orders')
+                                  ->where('sales_order_id', $salesOrder->sales_order_id)
+                                  ->where('status', 'delivered');
+                            })
+                            ->where('part_number', $item->part_number)
+                            ->sum('quantity');
+
+                        $subtotal = $deliveredQty * $unitPrice;
+
+                        $tableData[] = [
+                            'product' => $productName,
+                            'delivered_qty' => (int) $deliveredQty,
+                            'unit_price' => $unitPrice,
+                            'subtotal' => $subtotal,
+                        ];
+
+                        $tableTotal += $subtotal;
+                    }
+
+                    // --- Hitung total setelah credit (hanya untuk tampilan, tidak mengubah DB) ---
+                    $totalCreditAvailable = (float) $oldCreditMemo + (float) $currentCreditMemo;
+                    $creditMemoUsed = min($tableTotal, $totalCreditAvailable);
+                    $payableAmount = max(0, $tableTotal - $creditMemoUsed);
+
+                    // (opsional) bagi penggunaan credit antara old/current untuk tampilan:
+                    $usedFromOld = min((float) $oldCreditMemo, $creditMemoUsed);
+                    $usedFromCurrent = $creditMemoUsed - $usedFromOld;
+
+                    // --- Generate PDF dan simpan ---
+                    $pdf = Pdf::loadView('pdf.invoice', [
+                        'transaction' => $this->record,
+                        'tableData' => $tableData,
+                        'tableTotal' => $tableTotal,
+                        'oldCreditMemo' => $oldCreditMemo,
+                        'currentCreditMemo' => $currentCreditMemo,
+                        'creditMemoUsed' => $creditMemoUsed,
+                        'payableAmount' => $payableAmount,
+                        'usedFromOld' => $usedFromOld,
+                        'usedFromCurrent' => $usedFromCurrent,
+                    ])->setPaper('A4');
+
+                    $pdfPath = storage_path('app/public/invoice_' . $this->record->invoice_id . '.pdf');
+                    $pdf->save($pdfPath);
+
+                    // --- Kirim email ke dealer + outlet sekaligus (kedua alamat) ---
                     Mail::send('emails.reminder', [
                         'transaction' => $this->record,
-                        'creditAmount' => CreditMemos::where('customer_id', $salesOrder->customer_id)
-                            ->where('status', 'ISSUED')
-                            ->sum('amount'),
-                    ], function ($message) use ($salesOrder) {
-                        $message->to($salesOrder->dealer->email)
-                            ->subject("NO {$this->record->invoice_id}_Dealer Reminder");
-                        $message->to($salesOrder->outlet->email)
-                            ->subject("NO {$this->record->invoice_id}_Outlet Reminder");
+                        // untuk kompatibilitas view lama sekaligus data baru
+                        'creditAmount' => $oldCreditMemo,
+                        'oldCreditMemo' => $oldCreditMemo,
+                        'currentCreditMemo' => $currentCreditMemo,
+                        'creditMemoUsed' => $creditMemoUsed,
+                        'payableAmount' => $payableAmount,
+                        'tableData' => $tableData,
+                        'tableTotal' => $tableTotal,
+                    ], function ($message) use ($salesOrder, $pdfPath) {
+                        // kirim ke dealer dan outlet
+                        $toAddresses = [$salesOrder->dealer->email];
+                        if (!empty($salesOrder->outlet->email)) {
+                            $toAddresses[] = $salesOrder->outlet->email;
+                        }
+
+                        $message->to($toAddresses)
+                            ->subject("Payment Reminder - {$this->record->invoice_id}")
+                            ->attach($pdfPath);
                     });
 
+                    // update flag reminder dan notifikasi
                     $this->record->update(['status_reminder' => 'has been sent']);
-                    $this->dispatch('show-toast', [
-                        'message' => 'Email berhasil dikirim',
-                        'type' => 'success',
-                    ]);
+
+                    Notification::make()
+                        ->title('Email Reminder Success')
+                        ->body("Berhasil mengirim email ke: {$salesOrder->dealer->email}" . (!empty($salesOrder->outlet->email) ? " & {$salesOrder->outlet->email}" : ''))
+                        ->success()
+                        ->send();
                 }),
+
 
             Actions\Action::make('Open Email')
                 ->color('gray')
@@ -215,37 +312,40 @@ class EmailAndPayment extends Page implements HasForms
 
 
             Actions\Action::make('Check Credit Memo')
-                ->label('Check Credit Memo')
-                ->color('warning')
-                ->action(function () {
-                    $salesOrder = $this->record->salesOrder;
+    ->label('Check Credit Memo')
+    ->color('warning')
+    ->action(function () {
+        $salesOrder = $this->record->salesOrder;
 
-                    if (!$salesOrder || !$salesOrder->customer_id) {
-                        Notification::make()
-                            ->title('Customer ID tidak ditemukan')
-                            ->danger()
-                            ->send();
-                        return;
-                    }
+        if (!$salesOrder || !$salesOrder->customer_id) {
+            Notification::make()
+                ->title('Customer ID tidak ditemukan')
+                ->danger()
+                ->send();
+            return;
+        }
 
-                    $customerId = $salesOrder->customer_id;
+        $customerId = $salesOrder->customer_id;
 
-                    // Ambil total credit memo dari customer tersebut
-                    $totalCreditMemo = \App\Models\CreditMemos::where('customer_id', $customerId)->sum('amount');
+        // Ambil total credit memo dari customer tersebut dengan status ISSUED
+        $totalCreditMemo = \App\Models\CreditMemos::where('customer_id', $customerId)
+            ->where('status', 'ISSUED')
+            ->sum('amount');
 
-                    if ($totalCreditMemo > 0) {
-                        Notification::make()
-                            ->title("Credit Memo ditemukan untuk Customer {$customerId}")
-                            ->body("Total credit memo: Rp " . number_format($totalCreditMemo, 0, ',', '.'))
-                            ->success()
-                            ->send();
-                    } else {
-                        Notification::make()
-                            ->title("Customer {$customerId} tidak memiliki credit memo")
-                            ->warning()
-                            ->send();
-                    }
-                }),
+        if ($totalCreditMemo > 0) {
+            Notification::make()
+                ->title("Credit Memo ditemukan untuk Customer {$customerId}")
+                ->body("Total credit memo (status ISSUED): Rp " . number_format($totalCreditMemo, 0, ',', '.'))
+                ->success()
+                ->send();
+        } else {
+            Notification::make()
+                ->title("Customer {$customerId} tidak memiliki credit memo dengan status ISSUED")
+                ->warning()
+                ->send();
+        }
+    }),
+
         ];
     }
 }

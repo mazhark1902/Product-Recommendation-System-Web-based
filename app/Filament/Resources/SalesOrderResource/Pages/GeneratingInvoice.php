@@ -6,6 +6,7 @@ use App\Filament\Resources\SalesOrderResource;
 use App\Models\SalesOrder;
 use App\Models\SalesOrderItem;
 use App\Models\Inventory;
+use App\Models\CreditMemos;
 
 use Filament\Resources\Pages\Page;
 use Illuminate\Support\Facades\DB;
@@ -102,35 +103,55 @@ public function confirmOrder()
     DB::transaction(function () {
         $salesOrder = $this->record;
 
-        // 1. Update status sales order
         $salesOrder->update(['status' => 'confirmed']);
 
-        // 2. Buat transaksi
         $transaction = Transaction::create([
             'invoice_id' => 'INV' . now()->format('YmdHis'),
             'sales_order_id' => $salesOrder->sales_order_id,
             'invoice_date' => now(),
             'due_date' => now()->addDays(30),
             'status' => 'unpaid',
-            'total_amount' => $this->tableTotal, // sum subtotal
+            'total_amount' => $this->tableTotal,
         ]);
 
-        // 3. Generate PDF dari view
+        // Ambil credit memo dealer (total semua yg available)
+        $oldCreditMemo = CreditMemos::where('customer_id', $salesOrder->outlet->outlet_code)
+            ->sum('amount');
+
+        // Hitung credit memo yang akan digunakan (maksimal sebesar total_amount)
+        $creditMemoUsed = min($oldCreditMemo, $this->tableTotal);
+
+        // Hitung sisa credit memo setelah dipakai
+        $currentCreditMemo = $oldCreditMemo - $creditMemoUsed;
+
+        // Hitung total yang harus dibayar setelah potongan credit memo
+        $payableAmount = $this->tableTotal - $creditMemoUsed;
+
+        // Generate PDF
         $pdf = Pdf::loadView('pdf.invoice', [
             'transaction' => $transaction,
             'tableData' => $this->tableData,
-            'tableTotal' => $this->tableTotal
+            'tableTotal' => $this->tableTotal,
+            'oldCreditMemo' => $oldCreditMemo,
+            'currentCreditMemo' => $currentCreditMemo,
+            'creditMemoUsed' => $creditMemoUsed,
+            'payableAmount' => $payableAmount
         ]);
 
         $pdfPath = storage_path('app/public/invoice_' . $transaction->invoice_id . '.pdf');
         $pdf->save($pdfPath);
 
-        // 4. Kirim email ke dealer
+        // Email
         $dealerEmail = $salesOrder->dealer->email ?? null;
         if ($dealerEmail) {
-            Mail::send('emails.reminder', [
+            Mail::send('emails.invoice_notification', [
                 'transaction' => $transaction,
-                'creditAmount' => 0
+                'tableData' => $this->tableData,
+                'tableTotal' => $this->tableTotal,
+                'oldCreditMemo' => $oldCreditMemo,
+                'currentCreditMemo' => $currentCreditMemo,
+                'creditMemoUsed' => $creditMemoUsed,
+                'payableAmount' => $payableAmount
             ], function ($message) use ($dealerEmail, $pdfPath, $transaction) {
                 $message->to($dealerEmail)
                         ->subject('Invoice ' . $transaction->invoice_id)
@@ -138,32 +159,12 @@ public function confirmOrder()
             });
         }
 
-            $pdfPath = storage_path('app/public/invoice_' . $transaction->invoice_id . '.pdf');
-            $pdf->save($pdfPath);
+        Notification::make()
+            ->title("Successfully generated: {$transaction->invoice_id} & sent to email: {$dealerEmail}")
+            ->success()
+            ->send();
 
-            // Kirim email
-            $dealerEmail = $salesOrder->dealer->email ?? null;
-            if ($dealerEmail) {
-                Mail::send('emails.invoice_notification', [
-                    'transaction' => $transaction,
-                    'tableData' => $this->tableData,
-                    'tableTotal' => $this->tableTotal
-                ], function ($message) use ($dealerEmail, $pdfPath, $transaction) {
-                    $message->to($dealerEmail)
-                            ->subject('Invoice ' . $transaction->invoice_id)
-                            ->attach($pdfPath);
-                });
-            }
-
-            // Notifikasi sukses + buka PDF
-            Notification::make()
-                ->title("Successfully generated: {$transaction->invoice_id} & sent to email: {$dealerEmail}")
-                ->success()
-                ->send();
-
-            // Redirect langsung ke file PDF
-            return redirect(Storage::url('invoice_' . $transaction->invoice_id . '.pdf'));
-
+        return redirect(Storage::url('invoice_' . $transaction->invoice_id . '.pdf'));
     });
 }
 
