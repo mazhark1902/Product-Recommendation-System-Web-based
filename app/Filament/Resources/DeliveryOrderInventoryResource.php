@@ -170,7 +170,7 @@ class DeliveryOrderInventoryResource extends Resource
                                     $record->load('salesOrder');
                                     StockReservation::where('sales_order_id', $record->sales_order_id)->where('status', 'ACTIVE')->update(['status' => 'RELEASED']);
                                     if ($record->salesOrder) {
-                                        $record->salesOrder->update(['status' => 'delivered']);
+                                        $record->salesOrder->update(['status' => 'confirmed']);
                                     }
                                 }
 
