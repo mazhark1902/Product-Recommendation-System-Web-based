@@ -98,15 +98,23 @@
         <tr>
             <td>{{ $transaction->invoice_id }}</td>
             <td>{{ $transaction->sales_order_id }}</td>
+            @php
+                $total = $transaction->total_amount;
+                $credit = min($total, $creditAmount ?? 0);
+                $payable = max($total - ($creditAmount ?? 0), 0);
+            @endphp
             <td>
-                Rp {{ number_format($adjustedTotal, 0, ',', '.') }}
+                Rp {{ number_format($total, 0, ',', '.') }}
                 @if ($credit > 0)
                     <br><small>Credit Used: Rp {{ number_format($credit, 0, ',', '.') }}</small>
-                    @if ($isCoveredByCredit)
+                    @if ($payable == 0)
                         <br><strong style="color:green;">Paid in full using Credit Memo</strong>
+                    @else
+                        <br><small>Payable Amount: Rp {{ number_format($payable, 0, ',', '.') }}</small>
                     @endif
                 @endif
             </td>
+
             <td>{{ ucfirst($transaction->status) }}</td>
         </tr>
         </tbody>

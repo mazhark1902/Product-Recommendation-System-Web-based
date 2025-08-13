@@ -116,6 +116,12 @@ class CreditMemosResource extends Resource
             //
         ];
     }
+    
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->whereIn('status', ['ISSUED', 'REFUNDED']);
+    }
 
     public static function getPages(): array
     {

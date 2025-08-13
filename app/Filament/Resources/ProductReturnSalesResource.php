@@ -15,6 +15,10 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use BezhanSalleh\FilamentShield\Traits\HasShieldFormComponents;
+use Filament\Notifications\Notification;
+use App\Models\SalesOrderItem;
+use Filament\Actions;
+
 
 
 class ProductReturnSalesResource extends Resource
@@ -88,7 +92,7 @@ public static function form(Forms\Form $form): Forms\Form
         ]);
     }
 
-
+    
     public static function table(Tables\Table $table): Tables\Table
     {
         return $table->columns([
@@ -120,3 +124,4 @@ public static function form(Forms\Form $form): Forms\Form
         ];
     }
 }
+

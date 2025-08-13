@@ -13,7 +13,7 @@ class PaymentProofController extends Controller
     {
         $request->validate([
             'transaction_id' => 'required|exists:transaction,id',
-            'proof' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'proof' => 'required|image|mimes:jpeg,png,jpg|max:5000',
         ]);
 
         $transaction = Transaction::findOrFail($request->transaction_id);

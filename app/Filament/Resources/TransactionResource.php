@@ -45,6 +45,7 @@ class TransactionResource extends Resource
                     ->color('secondary')
                     ->url(fn (Transaction $record) => TransactionResource::getUrl('email-payment', ['record' => $record]))
                     ->openUrlInNewTab()
+                    ->visible(fn (Transaction $record) => in_array($record->status, ['unpaid', 'partial']))
 
                         
                     ->requiresConfirmation()

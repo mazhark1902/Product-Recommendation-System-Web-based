@@ -1,0 +1,21 @@
+<x-filament-panels::page>
+    <div class="mb-6 p-4 border border-gray-300 rounded-md shadow-sm bg-white">
+        <h2 class="text-xl font-semibold text-gray-800 mb-2">Dealer Details</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+            <p><strong>Dealer Code:</strong> {{ $Dealer->dealer_code }}</p>
+            <p><strong>Dealer Name:</strong> {{ $Dealer->dealer_name }}</p>
+        </div>
+        <!-- <p class="mt-1"><strong>Total Calculated Price:</strong>
+            <span class="font-bold text-primary-600">
+                {{-- Assuming part_price is stored with 2 decimal places as per SQL decimal(10,2) --}}
+                IDR {{ number_format($Dealer->part_price, 2, ',', '.') }}
+            </span>
+        </p> -->
+    </div>
+
+    <h3 class="text-lg font-semibold text-gray-800 mb-3">Outlet For : {{ $Dealer->dealer_name }}</h3>
+
+    {{-- This will render the table defined in your ViewDealer PHP class --}}
+    {{ $this->table }}
+
+</x-filament-panels::page>

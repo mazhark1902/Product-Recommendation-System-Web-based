@@ -23,6 +23,8 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\TernaryFilter;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use BezhanSalleh\FilamentShield\Traits\HasShieldFormComponents;
+use Illuminate\Support\HtmlString;
+use Carbon\Carbon;
 
 
 class QuotationResource extends Resource
@@ -50,8 +52,23 @@ class QuotationResource extends Resource
                     ->relationship('outlet', 'outlet_name')
                     ->required(),
 
-                DatePicker::make('quotation_date')->required(),
-                DatePicker::make('valid_until')->required(),
+                DatePicker::make('quotation_date')
+                    ->label('Quotation Date')
+                    ->required()
+                    ->maxDate(now()) // hanya bisa pilih hari ini & ke belakang
+                    ->reactive()
+                    ->afterStateUpdated(function ($state, callable $set) {
+                        if ($state) {
+                            $set('valid_until', Carbon::parse($state)->addDays(7)->format('Y-m-d'));
+                        }
+                    }),
+                DatePicker::make('valid_until')
+                    ->label('Valid Until')
+                    ->required()
+                    ->disabled()   // readonly di form
+                    ->dehydrated() // tetap disimpan ke DB
+                    ->helperText(new HtmlString('<span class="text-red-600">* Valid until 7 days after quotation date</span>')), // ini penting supaya HTML di helperText terbaca
+// tetap simpan ke DB walau disabled// tetap kirim ke DB walau disabled
 
                 TextInput::make('total_amount')
                     ->label('Total Amount')
@@ -137,7 +154,7 @@ class QuotationResource extends Resource
                         'success' => 'Approved',
                         'danger' => 'Rejected',
                     ]),
-                TextColumn::make('total_amount')->money('USD'),
+                TextColumn::make('total_amount')->money('IDR'),
             ])
             ->actions([
                 Action::make('Edit')

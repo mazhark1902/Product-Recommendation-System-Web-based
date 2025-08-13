@@ -7,6 +7,9 @@ use Filament\Resources\Pages\CreateRecord;
 use App\Models\ProductReturn;
 use App\Models\CreditMemos;
 use App\Models\SubPart;
+use Filament\Notifications\Notification;
+use App\Models\SalesOrderItem;
+use Filament\Actions;
 
 class CreateProductReturnSales extends CreateRecord
 {
@@ -18,7 +21,59 @@ class CreateProductReturnSales extends CreateRecord
         // return_id sudah di-set di default
         return $data;
     }
+protected function getFormActions(): array
+    {
+        return [
+            Actions\Action::make('validateReturn')
+    ->label('Validate Product Return')
+    ->color('info')
+    ->action(function () {
+        $data = $this->data; // Ambil semua input form yang sudah diisi
 
+        if (empty($data['sales_order_id']) || empty($data['part_number']) || empty($data['quantity'])) {
+            Notification::make()
+                ->title('Missing data')
+                ->body('Please select a Sales Order, Part Number, and Quantity before validation.')
+                ->danger()
+                ->send();
+            return;
+        }
+
+        $orderItem = SalesOrderItem::where('sales_order_id', $data['sales_order_id'])
+            ->where('part_number', $data['part_number'])
+            ->first();
+
+        if (!$orderItem) {
+            Notification::make()
+                ->title('Product not found')
+                ->body("The selected product does not exist in Sales Order {$data['sales_order_id']}.")
+                ->danger()
+                ->send();
+            return;
+        }
+
+        $orderedQty = (int) $orderItem->quantity;
+        $returnQty = (int) $data['quantity'];
+
+        if ($returnQty > $orderedQty) {
+            Notification::make()
+                ->title('Quantity exceeds order limit')
+                ->body("The return quantity for {$orderItem->part_number} exceeds the ordered quantity in Sales Order {$data['sales_order_id']}.")
+                ->danger()
+                ->send();
+        } else {
+            Notification::make()
+                ->title('Return validated')
+                ->body("The return quantity for {$orderItem->part_number} is valid and can be processed.")
+                ->success()
+                ->send();
+        }
+    }),
+
+            $this->getCreateFormAction(),
+            $this->getCreateAnotherFormAction(),
+        ];
+    }
 protected function afterCreate(): void
 {
     $record = $this->record;

@@ -43,5 +43,11 @@ class InvoiceStatusDistribution extends ChartWidget
         return 'doughnut'; // Change to 'pie' if you prefer
     }
 
+    protected function getMaxHeight(): ?string
+{
+    return '275px'; // adjust as needed (e.g. 150px, 250px)
+}
+
+
     protected static ?int $sort = 3;
 }
