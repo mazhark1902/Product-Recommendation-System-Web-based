@@ -42,5 +42,11 @@ class TopCustomersByInvoice extends ChartWidget
         return 'bar'; // or 'horizontalBar' if you prefer (v2 Chart.js only)
     }
 
+    protected function getMaxHeight(): ?string
+{
+    return '300px'; // adjust as needed (e.g. 150px, 250px)
+}
+
+
     protected static ?int $sort = 5;
 }

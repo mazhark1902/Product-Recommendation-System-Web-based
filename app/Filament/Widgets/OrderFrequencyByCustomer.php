@@ -10,7 +10,7 @@ use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 class OrderFrequencyByCustomer extends ChartWidget
 {
     use HasWidgetShield;
-    protected static ?string $heading = 'Order Frequency by Customer (Last 12 Months)';
+    protected static ?string $heading = 'Order Frequency by Customer';
     protected static ?int $sort = 7;
 
     // ✅ Tambahkan filter outlet_dealer (pakai outlet_name)
@@ -84,6 +84,11 @@ class OrderFrequencyByCustomer extends ChartWidget
     protected function getType(): string
     {
         return 'line';
+    }
+
+        protected function getMaxHeight(): ?string
+    {
+    return '275px'; // adjust as needed (e.g. 150px, 250px)
     }
 
     protected function getOptions(): ?array
