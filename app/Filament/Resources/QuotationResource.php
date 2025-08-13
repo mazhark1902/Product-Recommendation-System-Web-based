@@ -154,7 +154,7 @@ class QuotationResource extends Resource
                         'success' => 'Approved',
                         'danger' => 'Rejected',
                     ]),
-                TextColumn::make('total_amount')->money('USD'),
+                TextColumn::make('total_amount')->money('IDR'),
             ])
             ->actions([
                 Action::make('Edit')

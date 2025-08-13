@@ -41,10 +41,6 @@ class AdminDashboardCustomer extends BaseWidget
                 ->description('Placed order in last 30 days')
                 ->color('success'),
 
-            Stat::make('High Risk Customers', $highRisk)
-                ->description('No orders in >60 days')
-                ->color('danger'),
-
             Stat::make('Avg Days Since Last Order', number_format($avgDaysSince, 1) . ' days')
                 ->description('Across all customers')
                 ->color('warning'),
