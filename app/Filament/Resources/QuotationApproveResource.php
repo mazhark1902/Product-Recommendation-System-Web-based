@@ -39,7 +39,9 @@ class QuotationApproveResource extends Resource
     {
         return $table
             ->query(
-                Quotation::query()->where('status', 'Pending')
+                Quotation::query()
+                    ->where('status', 'Pending')
+                    ->whereDate('valid_until', '>=', now()->toDateString())
             )
             ->columns([
                 TextColumn::make('quotation_id')

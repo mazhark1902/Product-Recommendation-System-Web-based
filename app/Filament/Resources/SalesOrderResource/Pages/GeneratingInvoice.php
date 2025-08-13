@@ -116,6 +116,7 @@ public function confirmOrder()
 
         // Ambil credit memo dealer (total semua yg available)
         $oldCreditMemo = CreditMemos::where('customer_id', $salesOrder->outlet->outlet_code)
+            ->where('status', 'ISSUED')
             ->sum('amount');
 
         // Hitung credit memo yang akan digunakan (maksimal sebesar total_amount)

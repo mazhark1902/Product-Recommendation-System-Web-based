@@ -73,7 +73,8 @@ class SalesOrderResource extends Resource
                     ->icon('heroicon-o-document-text')
                     ->url(fn (SalesOrder $record) => route('filament.admin.resources.sales-orders.generating-invoice', ['record' => $record]))
                     ->openUrlInNewTab()
-                    ->visible(fn (SalesOrder $record) => $record->status === 'draft' || 'delivered'),
+                    ->visible(fn (SalesOrder $record) => in_array($record->status, ['draft', 'confirmed'])),
+
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

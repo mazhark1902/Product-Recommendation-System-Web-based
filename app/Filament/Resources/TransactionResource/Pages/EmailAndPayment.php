@@ -119,6 +119,7 @@ public function submit()
                     }
 
                     // --- Hitung oldCreditMemo (semua credit memo ISSUED untuk customer/outlet) ---
+                    // --- Hitung oldCreditMemo (semua credit memo ISSUED untuk customer/outlet) ---
                     $oldCreditMemo = \App\Models\CreditMemos::join(
                             'product_returns', 'credit_memos.return_id', '=', 'product_returns.return_id'
                         )
@@ -127,31 +128,22 @@ public function submit()
                         ->where('credit_memos.status', 'ISSUED')
                         ->sum('credit_memos.amount');
 
-                    // --- Hitung currentCreditMemo (credit memo yang berasal dari return untuk sales order ini) ---
-                    $currentCreditMemo = \App\Models\CreditMemos::join(
-                            'product_returns', 'credit_memos.return_id', '=', 'product_returns.return_id'
-                        )
-                        ->where('product_returns.sales_order_id', $salesOrder->sales_order_id)
-                        ->sum('credit_memos.amount');
-
-                    // --- Build tableData (nama produk dari sub_parts, delivered qty dari delivery_items) ---
+                    // --- Build tableData dan tableTotal ---
                     $tableData = [];
                     $tableTotal = 0;
 
                     $soItems = SalesOrderItem::where('sales_order_id', $salesOrder->sales_order_id)->get();
 
                     foreach ($soItems as $item) {
-                        // ambil nama & harga dari sub_parts kalau ada
                         $subPart = SubPart::where('sub_part_number', $item->part_number)->first();
                         $productName = $subPart ? ($subPart->sub_part_name ?? $item->part_number) : $item->part_number;
                         $unitPrice = $subPart ? (float) ($subPart->price ?? $item->unit_price ?? 0) : (float) ($item->unit_price ?? 0);
 
-                        // hitung delivered qty dari delivery_orders yang status 'delivered'
                         $deliveredQty = DeliveryItem::whereIn('delivery_order_id', function ($q) use ($salesOrder) {
                                 $q->select('delivery_order_id')
-                                  ->from('delivery_orders')
-                                  ->where('sales_order_id', $salesOrder->sales_order_id)
-                                  ->where('status', 'delivered');
+                                ->from('delivery_orders')
+                                ->where('sales_order_id', $salesOrder->sales_order_id)
+                                ->where('status', 'delivered');
                             })
                             ->where('part_number', $item->part_number)
                             ->sum('quantity');
@@ -168,14 +160,17 @@ public function submit()
                         $tableTotal += $subtotal;
                     }
 
-                    // --- Hitung total setelah credit (hanya untuk tampilan, tidak mengubah DB) ---
-                    $totalCreditAvailable = (float) $oldCreditMemo + (float) $currentCreditMemo;
-                    $creditMemoUsed = min($tableTotal, $totalCreditAvailable);
-                    $payableAmount = max(0, $tableTotal - $creditMemoUsed);
+                    // === Samakan logika dengan confirmOrder ===
 
-                    // (opsional) bagi penggunaan credit antara old/current untuk tampilan:
-                    $usedFromOld = min((float) $oldCreditMemo, $creditMemoUsed);
-                    $usedFromCurrent = $creditMemoUsed - $usedFromOld;
+                    // Hitung credit memo yang akan digunakan (maksimal sebesar total_amount/tableTotal)
+                    $creditMemoUsed = min($oldCreditMemo, $tableTotal);
+
+                    // Hitung sisa credit memo setelah dipakai
+                    $currentCreditMemo = $oldCreditMemo - $creditMemoUsed;
+
+                    // Hitung total yang harus dibayar setelah potongan credit memo
+                    $payableAmount = $tableTotal - $creditMemoUsed;
+
 
                     // --- Generate PDF dan simpan ---
                     $pdf = Pdf::loadView('pdf.invoice', [
@@ -186,8 +181,6 @@ public function submit()
                         'currentCreditMemo' => $currentCreditMemo,
                         'creditMemoUsed' => $creditMemoUsed,
                         'payableAmount' => $payableAmount,
-                        'usedFromOld' => $usedFromOld,
-                        'usedFromCurrent' => $usedFromCurrent,
                     ])->setPaper('A4');
 
                     $pdfPath = storage_path('app/public/invoice_' . $this->record->invoice_id . '.pdf');
@@ -251,7 +244,12 @@ public function submit()
                         ->dehydrated(true),
 
                     DatePicker::make('payment_date')->required(),
-                    TextInput::make('amount_paid')->required(),
+                        TextInput::make('amount_paid')
+                        ->default(fn ($livewire) => $livewire->record->total_amount)
+                        ->disabled()
+                        ->dehydrated(true)
+                        ->numeric()
+                        ->required(),
                     Select::make('payment_method')
                         ->options([
                             'Bank Transfer' => 'Bank Transfer',
