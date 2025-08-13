@@ -19,7 +19,7 @@ class DemandForecastResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-arrow-trending-up';
     protected static ?string $navigationGroup = 'Inventory';
-    protected static ?int $navigationSort = 5; // Set the order in the navigation
+    protected static ?int $navigationSort = 2; // Set the order in the navigation
 
     public static function form(Form $form): Form
     {

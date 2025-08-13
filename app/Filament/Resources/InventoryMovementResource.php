@@ -24,7 +24,7 @@ class InventoryMovementResource extends Resource implements HasShieldPermissions
 
     protected static ?string $navigationGroup = 'Inventory';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 7;
 
     public static function getNavigationLabel(): string
     {

@@ -35,21 +35,21 @@ class AdminDashboardInventory extends BaseWidget
         $freeStock = $availableStock - $reservedStock;
 
         return [
-            Stat::make('Total Inventory Value', 'IDR ' . number_format($totalValue, 2))
+            Stat::make('Total Inventory Value', 'Rp ' . number_format($totalValue, 2))
                 ->description('The total value of all available stock')
                 ->color('success'),
 
-            Stat::make('Available Stock (On Hand)', number_format($availableStock))
-                ->description('Total physical stock recorded across all warehouses.')
-                ->color('primary'),
-
-            Stat::make('Reserved Stock', number_format($reservedStock))
-                ->description('Stock that has been allocated for active sales orders.')
-                ->color('warning'),
-
-            Stat::make('Free Stock', number_format($freeStock))
+                Stat::make('Free Stock', number_format($freeStock))
                 ->description('The amount of safe stock that can be promised to customers.')
                 ->color('success'),
+                
+                Stat::make('Reserved Stock', number_format($reservedStock))
+                ->description('Stock that has been allocated for active sales orders.')
+                ->color('warning'),
+                
+                // Stat::make('Available Stock (On Hand)', number_format($availableStock))
+                //     ->description('Total physical stock recorded across all warehouses.')
+                //     ->color('primary'),
         ];
     }
 }

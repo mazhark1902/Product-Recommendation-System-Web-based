@@ -41,7 +41,7 @@ class DeliveryOrderInventoryResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-truck';
     protected static ?string $navigationGroup = 'Inventory';
     protected static ?string $navigationLabel = 'Delivery Orders Inventory';
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 5;
     public static function getPluralModelLabel(): string
     {
         return 'Delivery Orders Inventory';
@@ -182,6 +182,61 @@ class DeliveryOrderInventoryResource extends Resource
                         }
                     })
                     ->visible(fn(DeliveryOrderInventory $record) => $record->status === 'ready'),
+
+                // --- Tombol Reject: Muncul saat status 'pending' atau 'ready' ---
+                Action::make('reject_delivery')
+                    ->label('Reject Delivery')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('Reject Delivery Order')
+                    ->modalDescription('Are you sure you want to reject this delivery? This will release the reserved stock.')
+                    ->form([
+                        Forms\Components\Textarea::make('rejection_notes')
+                            ->label('Reason for Rejection')
+                            ->required(),
+                    ])
+                    ->action(function (DeliveryOrderInventory $record, array $data) {
+                        try {
+                            DB::transaction(function () use ($record, $data) {
+                                // 1. Update status DO menjadi 'cancelled'
+                                $record->update([
+                                    'status' => 'cancelled',
+                                    'notes' => $record->notes . "\n\nREJECTED: " . $data['rejection_notes'],
+                                ]);
+
+                                // 2. Bebaskan reservasi stok
+                                foreach ($record->items as $item) {
+                                    $inventory = Inventory::where('product_id', $item->part_number)->lockForUpdate()->first();
+                                    if ($inventory && $inventory->quantity_reserved >= $item->quantity) {
+                                        $inventory->decrement('quantity_reserved', $item->quantity);
+                                    }
+                                }
+
+                                // 3. Update status reservasi di tabel stock_reservations
+                                StockReservation::where('sales_order_id', $record->sales_order_id)
+                                    ->where('status', 'ACTIVE')
+                                    ->update(['status' => 'RELEASED']);
+
+                                // 4. (Opsional) Update status sales order jika perlu
+                                // $record->salesOrder->update(['status' => 'pending_delivery']);
+                            });
+
+                            Notification::make()
+                                ->title('Delivery Order Rejected')
+                                ->body('The delivery has been cancelled and stock has been released.')
+                                ->success()
+                                ->send();
+
+                        } catch (\Exception $e) {
+                            Notification::make()
+                                ->title('Process Failed')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    })
+                    ->visible(fn(DeliveryOrderInventory $record) => in_array($record->status, ['pending', 'ready'])),
             ]);
     }
 

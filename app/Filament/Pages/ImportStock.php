@@ -22,7 +22,7 @@ class ImportStock extends Page implements HasForms
     protected static ?string $navigationIcon = 'heroicon-o-arrow-up-tray';
     protected static string $view = 'filament.pages.import-stock';
     protected static ?string $navigationGroup = 'Inventory';
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 4;
 
     public ?array $file = [];
     public array $previewData = [];
