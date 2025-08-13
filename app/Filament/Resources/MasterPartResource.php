@@ -54,20 +54,13 @@ class MasterPartResource extends Resource
                     ->content('The part price will be automatically calculated based on its sub parts after creation and adding sub parts.')
                     ->visibleOn('create'),
 
-                // For EDIT form context
-                Forms\Components\TextInput::make('part_price')
-                    ->label('Current Total Price (Auto-calculated)')
-                    ->numeric()
-                    ->disabled() // Always disabled as it's calculated
-                    ->dehydrated(false) // Ensures it's not saved back
-                    ->visibleOn('edit'), // Only show on edit form
 
                 // This placeholder is also good for edit, shows live sum if possible
                 Placeholder::make('calculated_price_on_edit')
                     ->label('Calculated Price (from Sub Parts)')
                     ->content(function (?MasterPart $record): string {
                         if ($record) {
-                            return number_format($record->subParts()->sum('price'), 2) . ' (Stored: ' . number_format($record->part_price, 2) . ')';
+                            return 'IDR '. number_format($record->subParts()->sum('price'), 2) ;
                         }
                         return 'N/A';
                     })
@@ -90,6 +83,10 @@ class MasterPartResource extends Resource
                     ->money('IDR')
                     ->sortable()
                     ->label('Total Price'),
+                Tables\Columns\TextColumn::make('total_cost')
+                    ->money('IDR')
+                    ->sortable()
+                    ->label('Total Cost'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

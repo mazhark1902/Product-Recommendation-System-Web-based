@@ -22,6 +22,7 @@ class SubPart extends Model
         'sub_part_name',
         'part_number',
         'price',
+        'cost', // <-- TAMBAHKAN INI
     ];
 
     public function masterPart()

@@ -36,7 +36,7 @@ class AfterSalesKpiWidget extends BaseWidget
             // FIX 2: Use the correct table name in the join
             ->join('sub_parts', "{$inventoryTable}.product_id", '=', 'sub_parts.sub_part_number')
             // FIX 3: Use the correct table name in the SUM
-            ->sum(DB::raw("{$inventoryTable}.quantity_damaged * sub_parts.price"));
+            ->sum(DB::raw("{$inventoryTable}.quantity_damaged * sub_parts.cost"));
 
         return [
             Stat::make('Critical Stock', $criticalStockCount)

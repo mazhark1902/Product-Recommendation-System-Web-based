@@ -33,7 +33,7 @@ class DeadStockTable extends BaseWidget
                     ->where('inventory.quantity_available', '>', 0)
                     // Get products that are NOT in the subquery above
                     ->whereNotIn('inventory.product_id', $recentlySoldProducts)
-                    ->select('inventory.*', 'sub_parts.sub_part_name', 'sub_parts.price')
+                    ->select('inventory.*', 'sub_parts.sub_part_name', 'sub_parts.cost')
             )
             ->columns([
                 Tables\Columns\TextColumn::make('product_id')->label('Product ID'),
@@ -43,7 +43,7 @@ class DeadStockTable extends BaseWidget
                 Tables\Columns\TextColumn::make('potential_loss')
                     ->label('Potential Loss')
                     ->money('IDR')
-                    ->getStateUsing(fn ($record) => $record->quantity_available * $record->price),
+                    ->getStateUsing(fn ($record) => $record->quantity_available * $record->cost),
             ])
             ->emptyStateHeading('No dead stock identified.');
     }

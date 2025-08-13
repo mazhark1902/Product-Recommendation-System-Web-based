@@ -21,6 +21,7 @@ class MasterPart extends Model
         'part_number',
         'part_name',
         'part_price',
+        'total_cost', // <-- TAMBAHKAN INI
     ];
 
     public function subParts()

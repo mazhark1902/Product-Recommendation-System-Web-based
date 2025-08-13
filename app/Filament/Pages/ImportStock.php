@@ -9,6 +9,7 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use App\Models\Inventory;
 use App\Models\InventoryMovement;
+use App\Models\ImportLog;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Livewire\WithFileUploads;
@@ -22,7 +23,7 @@ class ImportStock extends Page implements HasForms
     protected static ?string $navigationIcon = 'heroicon-o-arrow-up-tray';
     protected static string $view = 'filament.pages.import-stock';
     protected static ?string $navigationGroup = 'Inventory';
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 3;
 
     public ?array $file = [];
     public array $previewData = [];
@@ -47,7 +48,8 @@ class ImportStock extends Page implements HasForms
                         session()->forget('import_preview_data');
                         return;
                     }
-                    // Pass the uploaded file object directly
+                    // --- PERBAIKAN DI SINI ---
+                    // Langsung kirim objek $state, bukan $state[0]
                     $this->processFile($state);
                 }),
         ];
@@ -56,9 +58,31 @@ class ImportStock extends Page implements HasForms
     public function processFile($uploadedFile)
     {
         $this->previewData = [];
+        session()->forget('import_preview_data');
+
+        if (!$uploadedFile) {
+            return;
+        }
         
         try {
             $filePath = $uploadedFile->getRealPath();
+            $fileChecksum = md5_file($filePath);
+
+            $existingLog = ImportLog::where('file_checksum', $fileChecksum)
+                                    ->where('status', 'success')
+                                    ->first();
+
+            if ($existingLog) {
+                Notification::make()
+                    ->title('Duplicate File Detected')
+                    ->body("This file appears to have been successfully imported on {$existingLog->created_at->format('d M Y, H:i')}.")
+                    ->danger()
+                    ->persistent()
+                    ->send();
+                $this->file = [];
+                return;
+            }
+
             $fileHandle = fopen($filePath, 'r');
             $header = array_map('trim', fgetcsv($fileHandle));
 
@@ -72,7 +96,7 @@ class ImportStock extends Page implements HasForms
             $validation = ['valid_rows' => [], 'invalid_rows' => []];
 
             while (($row = fgetcsv($fileHandle)) !== false) {
-                if (count(array_filter($row)) == 0) continue; // Skip empty rows
+                if (count(array_filter($row)) == 0) continue;
                 $rowData = array_combine($header, $row);
                 
                 $product = DB::table('sub_parts')->where('sub_part_number', $rowData['product_id'])->first();
@@ -89,31 +113,34 @@ class ImportStock extends Page implements HasForms
             fclose($fileHandle);
 
             $this->previewData = $validation;
-            session(['import_preview_data' => $validation['valid_rows']]);
+            session([
+                'import_preview_data' => $validation['valid_rows'],
+                'import_file_checksum' => $fileChecksum,
+                'import_file_name' => $uploadedFile->getClientOriginalName()
+            ]);
+
         } catch (\Exception $e) {
             Notification::make()->title('Failed to Read File')->body($e->getMessage())->danger()->send();
-            $this->previewData = [];
-            session()->forget('import_preview_data');
+            $this->resetState();
         }
     }
     
     public function confirmImport()
     {
         $validRows = session('import_preview_data', []);
-        if (empty($validRows)) {
-            Notification::make()->title('No Data to Import')->warning()->send();
+        $fileChecksum = session('import_file_checksum');
+        $fileName = session('import_file_name');
+
+        if (empty($validRows) || !$fileChecksum || !$fileName) {
+            Notification::make()->title('No Data to Import')->body('Please upload a valid file first.')->warning()->send();
             return;
         }
 
-        DB::transaction(function () use ($validRows) {
+        DB::transaction(function () use ($validRows, $fileChecksum, $fileName) {
             $processedCount = 0;
             foreach ($validRows as $row) {
                 $inventory = Inventory::firstOrCreate(['product_id' => $row['product_id']]);
                 $inventory->increment('quantity_available', (int)$row['quantity']);
-                // Location update can be added here if needed
-                // if (!empty($row['location'])) {
-                //     $inventory->location = $row['location'];
-                // }
                 $inventory->save();
 
                 InventoryMovement::create([
@@ -123,18 +150,31 @@ class ImportStock extends Page implements HasForms
                     'quantity' => (int)$row['quantity'],
                     'movement_date' => now(),
                     'reference_type' => 'CSV_IMPORT',
-                    'notes' => 'Stock in from CSV import.',
+                    'notes' => "Stock in from CSV import: {$fileName}",
                 ]);
                 $processedCount++;
             }
             
+            ImportLog::create([
+                'file_name' => $fileName,
+                'file_checksum' => $fileChecksum,
+                'status' => 'success',
+                'total_rows' => count($validRows),
+                'processed_rows' => $processedCount,
+                'user_id' => auth()->id(),
+            ]);
+            
             Notification::make()->title('Import Successful!')->body("Successfully processed {$processedCount} rows of data.")->success()->send();
         });
 
-        // Reset state after import
+        $this->resetState();
+    }
+
+    private function resetState(): void
+    {
         $this->previewData = [];
-        $this->file = null;
-        session()->forget('import_preview_data');
+        $this->file = [];
+        session()->forget(['import_preview_data', 'import_file_checksum', 'import_file_name']);
         $this->form->fill();
     }
 }

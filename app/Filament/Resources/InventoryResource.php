@@ -20,7 +20,7 @@ class InventoryResource extends Resource
     protected static ?string $model = Inventory::class;
     protected static ?string $navigationIcon = 'heroicon-o-archive-box';
     protected static ?string $navigationGroup = 'Inventory';
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
     {
@@ -28,14 +28,23 @@ class InventoryResource extends Resource
             ->schema([
                 Forms\Components\Select::make('product_id')
                     ->label('Sub Part')
-                    ->options(SubPart::all()->pluck('sub_part_name', 'sub_part_number'))
+                    // --- PERUBAHAN DIMULAI DI SINI ---
+                    ->options(function () {
+                        // 1. Ambil semua product_id yang sudah ada di tabel inventory
+                        $existingProductIds = Inventory::pluck('product_id')->all();
+
+                        // 2. Ambil semua sub-part yang product_id-nya TIDAK ADA di dalam daftar $existingProductIds
+                        return SubPart::whereNotIn('sub_part_number', $existingProductIds)
+                                      ->pluck('sub_part_name', 'sub_part_number');
+                    })
+                    // --- AKHIR DARI PERUBAHAN ---
                     ->searchable()
                     ->required()
                     ->unique(ignoreRecord: true)
                     ->disabledOn('edit'),
                 Forms\Components\TextInput::make('quantity_available')->label('Available Stock')->numeric()->required()->default(0),
                 Forms\Components\TextInput::make('minimum_stock')->label('Minimum Stock')->numeric()->required()->default(10),
-                Forms\Components\TextInput::make('quantity_reserved')->label('Reserved Stock')->numeric()->default(0),
+                Forms\Components\TextInput::make('quantity_reserved')->label('Reserved Stock')->numeric()->default(0)->disabled(),
                 Forms\Components\TextInput::make('quantity_damaged')->label('Damaged Stock')->numeric()->default(0),
                 Forms\Components\TextInput::make('location')->label('Storage Location')->maxLength(100),
             ]);

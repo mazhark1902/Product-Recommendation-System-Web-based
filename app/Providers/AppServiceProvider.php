@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use App\Models\SubPart; // <-- TAMBAHKAN BARIS INI
+use App\Observers\SubPartObserver; // <-- TAMBAHKAN BARIS INI
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -20,5 +22,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         //
+        // Daftarkan observer agar aktif saat aplikasi berjalan
+        SubPart::observe(SubPartObserver::class);
     }
 }

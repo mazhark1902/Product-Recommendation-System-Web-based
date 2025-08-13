@@ -28,15 +28,6 @@ class SubPartResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('part_number')
-                    ->relationship('masterPart', 'part_name') // Assumes masterPart relation exists on SubPart model
-                    ->label('Master Part')
-                    ->options(MasterPart::pluck('part_name', 'part_number')) // Provide options
-                    ->searchable()
-                    ->required()
-                    // When creating from ViewSubParts, this will be pre-filled and potentially disabled.
-                    // ->disabled(fn (string $context, ?SubPart $record, Forms\Get $get) => $context === 'edit' || $get('is_contextual_create') === true)
-                    ->dehydrated(), // Ensure it's saved
 
                 Forms\Components\TextInput::make('sub_part_number')
                     ->label('Sub Part Number')
@@ -56,6 +47,14 @@ class SubPartResource extends Resource
                     ->numeric()
                     ->required()
                     ->prefix('IDR'), // Assuming IDR
+
+                // --- TAMBAHKAN INPUT BARU DI SINI ---
+                Forms\Components\TextInput::make('cost')
+                    ->label('Cost')
+                    ->numeric()
+                    ->required()
+                    ->default(0)
+                    ->prefix('IDR'),
             ]);
     }
 
@@ -65,7 +64,7 @@ class SubPartResource extends Resource
         // which you might not use if managing sub-parts contextually.
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('masterPart.part_name')->label('Master Part')->searchable()->sortable(),
+                // Tables\Columns\TextColumn::make('masterPart.part_name')->label('Master Part')->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('sub_part_number')->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('sub_part_name')->searchable(),
                 Tables\Columns\TextColumn::make('price')->money('IDR')->sortable(),
