@@ -10,8 +10,14 @@ use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 class MostReturnedProductsChart extends ChartWidget
 {
     use HasWidgetShield;
-    protected static ?string $heading = 'Top 5 Most Frequently Returned Products';
+    
+    // PERBAIKAN 1: Ubah judul dari Top 5 menjadi Top 10
+    protected static ?string $heading = 'Top 10 Most Frequently Returned Products';
+    
     protected static ?int $sort = 6;
+
+    // PERBAIKAN 2: Tambahkan properti ini untuk membuat widget menjadi lebar penuh
+    protected int | string | array $columnSpan = 'full';
 
     protected function getData(): array
     {
@@ -20,7 +26,8 @@ class MostReturnedProductsChart extends ChartWidget
             ->select('sub_parts.sub_part_name', DB::raw('SUM(product_returns.quantity) as total_returned'))
             ->groupBy('sub_parts.sub_part_name')
             ->orderBy('total_returned', 'desc')
-            ->limit(5)
+            // PERBAIKAN 3: Ubah limit dari 5 menjadi 10
+            ->limit(10)
             ->get();
 
         return [
