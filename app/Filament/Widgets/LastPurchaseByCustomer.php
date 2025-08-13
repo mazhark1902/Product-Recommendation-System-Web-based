@@ -65,6 +65,11 @@ class LastPurchaseByCustomer extends ChartWidget
         ];
     }
 
+        protected function getMaxHeight(): ?string
+{
+    return '800px'; // adjust as needed (e.g. 150px, 250px)
+}
+
     protected function getType(): string
     {
         return 'bar';

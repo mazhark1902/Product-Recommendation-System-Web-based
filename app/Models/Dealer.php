@@ -16,7 +16,7 @@ class Dealer extends Model
     // app/Models/Dealer.php
 public function outlets()
 {
-    return $this->hasMany(Outlet::class, 'dealer_code', 'dealer_code');
+    return $this->hasMany(OutletDealer::class, 'dealer_code', 'dealer_code');
 }
 
 }

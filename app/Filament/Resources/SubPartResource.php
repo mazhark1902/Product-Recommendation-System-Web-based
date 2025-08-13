@@ -28,15 +28,15 @@ class SubPartResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('part_number')
-                    ->relationship('masterPart', 'part_name') // Assumes masterPart relation exists on SubPart model
-                    ->label('Master Part')
-                    ->options(MasterPart::pluck('part_name', 'part_number')) // Provide options
-                    ->searchable()
-                    ->required()
-                    // When creating from ViewSubParts, this will be pre-filled and potentially disabled.
-                    // ->disabled(fn (string $context, ?SubPart $record, Forms\Get $get) => $context === 'edit' || $get('is_contextual_create') === true)
-                    ->dehydrated(), // Ensure it's saved
+                // Forms\Components\Select::make('part_number')
+                //     ->relationship('masterPart', 'part_name') // Assumes masterPart relation exists on SubPart model
+                //     ->label('Master Part')
+                //     ->options(MasterPart::pluck('part_name', 'part_number')) // Provide options
+                //     ->searchable()
+                //     ->required()
+                //     // When creating from ViewSubParts, this will be pre-filled and potentially disabled.
+                //     // ->disabled(fn (string $context, ?SubPart $record, Forms\Get $get) => $context === 'edit' || $get('is_contextual_create') === true)
+                //     ->dehydrated(), // Ensure it's saved
 
                 Forms\Components\TextInput::make('sub_part_number')
                     ->label('Sub Part Number')

@@ -109,31 +109,38 @@ class DealerResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Action::make('view_details')
-                ->label('View Details')
-                ->icon('heroicon-o-eye')
-                ->infolist([
-                TextEntry::make('dealer_code')->label('Dealer Code'),
-                TextEntry::make('dealer_name')->label('Dealer Name'),
-                TextEntry::make('province')->label('Province'),
-                TextEntry::make('email')->label('Email'),
+            //     Tables\Actions\EditAction::make(),
+            //     Action::make('view_details')
+            //     ->label('View Details')
+            //     ->icon('heroicon-o-eye')
+            //     ->infolist([
+            //     TextEntry::make('dealer_code')->label('Dealer Code'),
+            //     TextEntry::make('dealer_name')->label('Dealer Name'),
+            //     TextEntry::make('province')->label('Province'),
+            //     TextEntry::make('email')->label('Email'),
 
-                // Outlets Section
-                \Filament\Infolists\Components\RepeatableEntry::make('outlets')
-                ->schema([
-                TextEntry::make('outlet_name')->label('Outlet Name'),
-                TextEntry::make('email')->label('Outlet Email'),
-                TextEntry::make('phone')->label('Phone'),
-                TextEntry::make('address')->label('Address'),
-                 ])
-                ->label('Outlets')
-                ->columns(2),
+            //     // Outlets Section
+            //     \Filament\Infolists\Components\RepeatableEntry::make('outlets')
+            //     ->schema([
+            //     TextEntry::make('outlet_name')->label('Outlet Name'),
+            //     TextEntry::make('email')->label('Outlet Email'),
+            //     TextEntry::make('phone')->label('Phone'),
+            //     TextEntry::make('address')->label('Address'),
+            //      ])
+            //     ->label('Outlets')
+            //     ->columns(2),
+            //         ])
+            //     ->modalSubmitAction(false)
+            //     ->modalCancelActionLabel('Close'),
+            
+                Tables\Actions\EditAction::make(),
+                \Filament\Tables\Actions\Action::make('ViewOutlet')
+                    ->label('View Outlet')
+                    ->icon('heroicon-m-eye')
+                    ->url(fn ($record): string => static::getUrl('outlet', ['dealer_code' => $record->dealer_code]))
+                    ->openUrlInNewTab(),
                     ])
-                ->modalSubmitAction(false)
-                ->modalCancelActionLabel('Close'),
-                ])
-            ->bulkActions([
+                ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     // Tables\Actions\DeleteBulkAction::make(),
                 ]),
@@ -153,6 +160,7 @@ class DealerResource extends Resource
             'index' => Pages\ListDealers::route('/'),
             'create' => Pages\CreateDealer::route('/create'),
             'edit' => Pages\EditDealer::route('/{record}/edit'),
+            'outlet' => Pages\ViewDealer::route('/{dealer_code}/outlet'),
         ];
     }
 }
