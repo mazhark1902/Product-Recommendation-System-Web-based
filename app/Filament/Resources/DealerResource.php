@@ -18,6 +18,8 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use BezhanSalleh\FilamentShield\Traits\HasShieldFormComponents;
+use Filament\Forms\Components\Select;
+
 
 class DealerResource extends Resource
 {
@@ -30,10 +32,67 @@ class DealerResource extends Resource
     {
         return $form
             ->schema([
-                TextInput::Make('dealer_code')->required()->visibleOn('create'),
+                // TextInput::Make('dealer_code')->required()->visibleOn('create'),
+                TextInput::make('dealer_code')
+                ->default(function () {
+                    $latest = Dealer::orderBy('dealer_code', 'desc')->first()?->dealer_code ?? 'DEA000';
+                    $nextNumber = str_pad((intval(substr($latest, 3)) + 1), 3, '0', STR_PAD_LEFT);
+                    return 'DEA' . $nextNumber;
+                })
+
+                    ->disabled()
+                    ->dehydrated()
+                    ->required()
+                    ->visibleOn('create'),
                 TextInput::Make('dealer_name')->required(),
-                TextInput::Make('province')->required(),
-                TextInput::Make('email')->required(),
+                Select::make('province')
+            ->required()
+            ->options([
+                'Aceh' => 'Aceh',
+                'Sumatera Utara' => 'Sumatera Utara',
+                'Sumatera Barat' => 'Sumatera Barat',
+                'Riau' => 'Riau',
+                'Kepulauan Riau' => 'Kepulauan Riau',
+                'Jambi' => 'Jambi',
+                'Sumatera Selatan' => 'Sumatera Selatan',
+                'Bangka Belitung' => 'Bangka Belitung',
+                'Bengkulu' => 'Bengkulu',
+                'Lampung' => 'Lampung',
+                'DKI Jakarta' => 'DKI Jakarta',
+                'Jawa Barat' => 'Jawa Barat',
+                'Banten' => 'Banten',
+                'Jawa Tengah' => 'Jawa Tengah',
+                'DI Yogyakarta' => 'DI Yogyakarta',
+                'Jawa Timur' => 'Jawa Timur',
+                'Bali' => 'Bali',
+                'Nusa Tenggara Barat' => 'Nusa Tenggara Barat',
+                'Nusa Tenggara Timur' => 'Nusa Tenggara Timur',
+                'Kalimantan Barat' => 'Kalimantan Barat',
+                'Kalimantan Tengah' => 'Kalimantan Tengah',
+                'Kalimantan Selatan' => 'Kalimantan Selatan',
+                'Kalimantan Timur' => 'Kalimantan Timur',
+                'Kalimantan Utara' => 'Kalimantan Utara',
+                'Sulawesi Utara' => 'Sulawesi Utara',
+                'Gorontalo' => 'Gorontalo',
+                'Sulawesi Tengah' => 'Sulawesi Tengah',
+                'Sulawesi Barat' => 'Sulawesi Barat',
+                'Sulawesi Selatan' => 'Sulawesi Selatan',
+                'Sulawesi Tenggara' => 'Sulawesi Tenggara',
+                'Maluku' => 'Maluku',
+                'Maluku Utara' => 'Maluku Utara',
+                'Papua' => 'Papua',
+                'Papua Barat' => 'Papua Barat',
+                'Papua Barat Daya' => 'Papua Barat Daya',
+                'Papua Selatan' => 'Papua Selatan',
+                'Papua Tengah' => 'Papua Tengah',
+                'Papua Pegunungan' => 'Papua Pegunungan',
+            ])
+                ->searchable(),
+                TextInput::make('email')
+                ->label('Email Address')
+                ->email() // sets HTML input type to "email"
+                ->required()
+                ->rule('email'),
             ]);
     }
 
