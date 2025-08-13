@@ -103,7 +103,7 @@ public function confirmOrder()
     DB::transaction(function () {
         $salesOrder = $this->record;
 
-        $salesOrder->update(['status' => 'confirmed']);
+        $salesOrder->update(['status' => 'delivered']);
 
         $transaction = Transaction::create([
             'invoice_id' => 'INV' . now()->format('YmdHis'),
