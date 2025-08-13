@@ -31,6 +31,9 @@ use App\Models\DeliveryItem;
 use App\Models\SubPart;
 
 
+
+
+
 class EmailAndPayment extends Page implements HasForms
 {
     use InteractsWithForms;
@@ -42,33 +45,53 @@ class EmailAndPayment extends Page implements HasForms
 
     public Transaction $record;
 
-    public ?\Livewire\TemporaryUploadedFile $proofFile = null;
 
-    public function mount(Transaction $record): void
-    {
-        $this->record = $record;
+
+public function mount(Transaction $record): void
+{
+    $this->record = $record;
+
+    if (request()->query('uploaded') == 1) {
+        $salesOrderNo = $this->record->salesOrder->sales_order_no ?? 'Unknown';
+
+        Notification::make()
+            ->title('✅ Proof Uploaded Successfully')
+            ->body("Proof has been saved for Sales Order: <strong style='color:#0d6efd;'>{$salesOrderNo}</strong>")
+            ->success()
+            ->send();
     }
+}
 
-    public function submit()
-    {
-        if ($this->proofFile) {
-            $path = $this->proofFile->store('proofs', 'public');
 
-            $this->record->update([
-                'proof' => $path,
-            ]);
+    // Ganti jadi:
+public $proofFile = null;
 
-            $this->dispatchBrowserEvent('swal:success', [
-                'title' => 'Berhasil!',
-                'text' => 'Bukti pembayaran berhasil disimpan.',
-            ]);
-        } else {
-            $this->dispatchBrowserEvent('swal:error', [
-                'title' => 'Gagal!',
-                'text' => 'Tidak ada file bukti yang dipilih.',
-            ]);
-        }
+public function submit()
+{
+    if ($this->proofFile) {
+        $path = $this->proofFile->store('proofs', 'public');
+
+        $this->record->update([
+            'proof' => $path,
+        ]);
+
+        $salesOrderNo = $this->record->salesOrder->sales_order_no ?? 'Unknown';
+
+        Notification::make()
+            ->title('✅ Proof Uploaded Successfully')
+            ->body("Proof has been saved for Sales Order: <strong style='color:#0d6efd;'>{$salesOrderNo}</strong>")
+            ->success()
+            ->send();
+
+        $this->proofFile = null; // reset supaya input kosong
+    } else {
+        Notification::make()
+            ->title('❌ Failed to Upload Proof')
+            ->body('No proof file was selected.')
+            ->danger()
+            ->send();
     }
+}
 
     protected function getFormSchema(): array
     {
@@ -91,7 +114,7 @@ class EmailAndPayment extends Page implements HasForms
                     $salesOrder = $this->record->salesOrder;
 
                     if (!$salesOrder || !$salesOrder->dealer || !$salesOrder->outlet) {
-                        Notification::make()->title('Data tidak lengkap')->danger()->send();
+                        Notification::make()->title('Incomplete data')->danger()->send();
                         return;
                     }
 
@@ -198,7 +221,7 @@ class EmailAndPayment extends Page implements HasForms
 
                     Notification::make()
                         ->title('Email Reminder Success')
-                        ->body("Berhasil mengirim email ke: {$salesOrder->dealer->email}" . (!empty($salesOrder->outlet->email) ? " & {$salesOrder->outlet->email}" : ''))
+                        ->body("Successfully sent email to: {$salesOrder->dealer->email}" . (!empty($salesOrder->outlet->email) ? " & {$salesOrder->outlet->email}" : ''))
                         ->success()
                         ->send();
                 }),
@@ -233,6 +256,7 @@ class EmailAndPayment extends Page implements HasForms
                         ->options([
                             'Bank Transfer' => 'Bank Transfer',
                             'Credit Note' => 'Credit Note',
+                            'Credit Note & Bank Transfer' => 'Credit Note & Bank Transfer',
                         ])
                         ->required(),
                 ])
@@ -241,12 +265,77 @@ class EmailAndPayment extends Page implements HasForms
                 ->modalSubmitActionLabel('Save')
                 ->modalCancelActionLabel('Decline')
                 ->action(function (array $data, EmailAndPayment $livewire) {
-                    // Validasi & proses payment (termasuk pemakaian Credit Memo jika dipilih)
                     $paymentAmount = (float) $data['amount_paid'];
                     $paymentMethod = $data['payment_method'];
 
-                    DB::transaction(function () use ($data, $livewire, $paymentAmount, $paymentMethod) {
-                        // Create Payment record
+                    $salesOrder = $livewire->record->salesOrder;
+                    if (!$salesOrder || !$salesOrder->customer_id) {
+                        Notification::make()
+                            ->title('Sales order / customer not found for this transaction.')
+                            ->danger()
+                            ->send();
+                        return redirect()->to(\App\Filament\Resources\TransactionResource::getUrl('index'));
+                    }
+
+                    $customerId = $salesOrder->customer_id;
+
+                    // === Pre-check untuk CREDIT NOTE ===
+                    if ($paymentMethod === 'Credit Note') {
+                        $creditMemos = CreditMemos::where('customer_id', $customerId)
+                            ->where('status', 'ISSUED')
+                            ->orderBy('issued_date')
+                            ->get();
+
+                        $totalAvailable = $creditMemos->sum('amount');
+
+                        if ($totalAvailable < $paymentAmount) {
+                            Notification::make()
+                                ->title('Insufficient credit memo for this customer.')
+                                ->danger()
+                                ->send();
+
+                            return redirect()->to(\App\Filament\Resources\TransactionResource::getUrl('index'));
+                        }
+                    }
+
+                    DB::transaction(function () use ($data, $livewire, $paymentAmount, $paymentMethod, $customerId) {
+                        // === CASE: CREDIT NOTE ===
+                        if ($paymentMethod === 'Credit Note') {
+                            $creditMemos = CreditMemos::where('customer_id', $customerId)
+                                ->where('status', 'ISSUED')
+                                ->orderBy('issued_date')
+                                ->get();
+
+                            $remaining = $paymentAmount;
+                            foreach ($creditMemos as $memo) {
+                                if ($remaining <= 0) break;
+
+                                if ($memo->amount <= $remaining) {
+                                    $remaining -= $memo->amount;
+                                    $memo->status = 'REFUNDED';
+                                    $memo->save();
+                                } else {
+                                    $memo->amount -= $remaining;
+                                    $memo->save();
+                                    $remaining = 0;
+                                }
+                            }
+                        }
+
+                        // === CASE: CREDIT NOTE & BANK TRANSFER ===
+                        if ($paymentMethod === 'Credit Note & Bank Transfer') {
+                            $creditMemos = CreditMemos::where('customer_id', $customerId)
+                                ->where('status', 'ISSUED')
+                                ->orderBy('issued_date')
+                                ->get();
+
+                            foreach ($creditMemos as $memo) {
+                                $memo->status = 'REFUNDED';
+                                $memo->save();
+                            }
+                        }
+
+                        // === Create Payment record ===
                         Payment::create([
                             'payment_id' => $data['payment_id'],
                             'invoice_id' => $livewire->record->invoice_id,
@@ -256,58 +345,94 @@ class EmailAndPayment extends Page implements HasForms
                             'created_at' => now(),
                         ]);
 
-                        // If payment via Credit Note, consume credit memos
-                        if ($paymentMethod === 'Credit Note') {
-                            $salesOrder = $livewire->record->salesOrder;
-                            if (!$salesOrder || !$salesOrder->customer_id) {
-                                throw new \Exception('Sales order / customer not found for this transaction.');
-                            }
-
-                            $customerId = $salesOrder->customer_id;
-
-                            // Ambil semua credit memos ISSUED
-                            $creditMemos = CreditMemos::where('customer_id', $customerId)
-                                ->where('status', 'ISSUED')
-                                ->orderBy('issued_date') // dipakai urut lama -> baru
-                                ->get();
-
-                            $totalAvailable = $creditMemos->sum('amount');
-
-                            if ($totalAvailable < $paymentAmount) {
-                                // jika tidak cukup, rollback & lempar exception untuk ditangani di luar
-                                throw new \Exception('Insufficient credit memo balance for this customer.');
-                            }
-
-                            $remaining = $paymentAmount;
-
-                            foreach ($creditMemos as $memo) {
-                                if ($remaining <= 0) break;
-
-                                if ($memo->amount <= $remaining) {
-                                    // fully consumed : ubah status jadi REFUNDED (amount tetap)
-                                    $remaining -= $memo->amount;
-                                    $memo->status = 'REFUNDED';
-                                    $memo->save();
-                                } else {
-                                    // partially consumed : kurangi amount, tetap ISSUED
-                                    $memo->amount = $memo->amount - $remaining;
-                                    $memo->save();
-                                    $remaining = 0;
-                                    break;
-                                }
-                            }
-                        }
-
                         // Update transaction status -> paid
                         $livewire->record->update(['status' => 'paid']);
                     });
 
-                    // jika sampai sini sukses
+                    // Ambil sales order & data dealer/outlet
+                    $salesOrder = $livewire->record->salesOrder;
+                    $dealerName = $salesOrder->outlet->outlet_name ?? 'Outlet';
+                    $outletEmail = $salesOrder->outlet->email ?? null;
+
+                    // Ambil item untuk di receipt
+                    $soItems = \App\Models\SalesOrderItem::where('sales_order_id', $salesOrder->sales_order_id)->get();
+                    $tableData = [];
+                    $tableTotal = 0;
+                    foreach ($soItems as $item) {
+                        $subPart = \App\Models\SubPart::where('sub_part_number', $item->part_number)->first();
+                        $productName = $subPart ? ($subPart->sub_part_name ?? $item->part_number) : $item->part_number;
+                        $unitPrice = $subPart ? (float) ($subPart->price ?? $item->unit_price ?? 0) : (float) ($item->unit_price ?? 0);
+                        $deliveredQty = \App\Models\DeliveryItem::whereIn('delivery_order_id', function ($q) use ($salesOrder) {
+                                $q->select('delivery_order_id')->from('delivery_orders')
+                                ->where('sales_order_id', $salesOrder->sales_order_id)
+                                ->where('status', 'delivered');
+                            })
+                            ->where('part_number', $item->part_number)
+                            ->sum('quantity');
+
+                        $subtotal = $deliveredQty * $unitPrice;
+                        $tableData[] = [
+                            'product' => $productName,
+                            'delivered_qty' => (int) $deliveredQty,
+                            'unit_price' => $unitPrice,
+                            'subtotal' => $subtotal,
+                        ];
+                        $tableTotal += $subtotal;
+                    }
+
+                    // Generate PDF Receipt
+                    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.receipt', [
+                        'invoiceId' => $livewire->record->invoice_id,
+                        'customerName' => $salesOrder->outlet->outlet_name ?? '-',
+                        'paymentDate' => $data['payment_date'],
+                        'paymentMethod' => $data['payment_method'],
+                        'amountPaid' => $paymentAmount,
+                        'items' => $tableData,
+                        'tableTotal' => $tableTotal,
+                    ])->setPaper('A4');
+
+                    // Simpan PDF di storage/app/public
+                    $fileName = 'receipt_' . $livewire->record->invoice_id . '.pdf';
+                    \Illuminate\Support\Facades\Storage::disk('public')->put($fileName, $pdf->output());
+
+                    // Path absolut untuk attachment email
+                    $absolutePath = \Illuminate\Support\Facades\Storage::disk('public')->path($fileName);
+
+                    $invoiceId = $livewire->record->invoice_id;
+
+                    \Mail::send('emails.payment_receipt', [
+                        'dealerName' => $dealerName,
+                        'invoiceId' => $invoiceId,
+                        'paymentDate' => $data['payment_date'],
+                        'paymentMethod' => $data['payment_method'],
+                        'amountPaid' => $paymentAmount,
+                    ], function ($message) use ($salesOrder, $absolutePath, $invoiceId) {
+                        $to = [$salesOrder->outlet->email];
+                        if (!empty($salesOrder->outlet->email)) {
+                            $to[] = $salesOrder->outlet->email;
+                        }
+                        $message->to($to)
+                            ->subject("Payment Receipt - {$invoiceId}")
+                            ->attach($absolutePath);
+                    });
+
+                    // URL publik setelah php artisan storage:link
+                    $receiptUrl = asset('storage/' . $fileName);
+
+                    // Kirim notifikasi dengan link PDF
                     Notification::make()
-                        ->title('Payment saved successfully and transaction updated to Paid')
+                        ->title('Payment Successfully')
+                        ->body('<a href="' . $receiptUrl . '" target="_blank">Lihat Receipt</a>')
                         ->success()
                         ->send();
+                        
+                    return redirect()->to(\App\Filament\Resources\TransactionResource::getUrl('index'));
                 })
+
+
+
+
+
                 ->disabled(fn () => $this->record->proof === null),
 
 
@@ -319,7 +444,7 @@ class EmailAndPayment extends Page implements HasForms
 
         if (!$salesOrder || !$salesOrder->customer_id) {
             Notification::make()
-                ->title('Customer ID tidak ditemukan')
+                ->title('Dealer not found for this sales order.')
                 ->danger()
                 ->send();
             return;
@@ -334,13 +459,13 @@ class EmailAndPayment extends Page implements HasForms
 
         if ($totalCreditMemo > 0) {
             Notification::make()
-                ->title("Credit Memo ditemukan untuk Customer {$customerId}")
+                ->title("Credit Memo found for Dealer: {$customerId}")
                 ->body("Total credit memo (status ISSUED): Rp " . number_format($totalCreditMemo, 0, ',', '.'))
                 ->success()
                 ->send();
         } else {
             Notification::make()
-                ->title("Customer {$customerId} tidak memiliki credit memo dengan status ISSUED")
+                ->title("Dealer {$customerId} does not have a credit memo with status ISSUED")
                 ->warning()
                 ->send();
         }

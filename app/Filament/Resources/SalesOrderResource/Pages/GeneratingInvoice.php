@@ -142,7 +142,7 @@ public function confirmOrder()
         $pdf->save($pdfPath);
 
         // Email
-        $dealerEmail = $salesOrder->dealer->email ?? null;
+        $dealerEmail = $salesOrder->outlet->email ?? null;
         if ($dealerEmail) {
             Mail::send('emails.invoice_notification', [
                 'transaction' => $transaction,
@@ -172,7 +172,7 @@ public function confirmOrder()
 {
     if (empty($this->notAvailableItems)) {
         Notification::make()
-            ->title('Tidak ada sub part yang perlu restock.')
+            ->title('Nothing SubPart to Restock')
             ->info()
             ->send();
         return;
@@ -222,7 +222,7 @@ public function confirmOrder()
 
         // Notifikasi sukses
         Notification::make()
-            ->title("Berhasil mengirim email SubPart Restock: {$restockId}")
+            ->title("Successfully sent SubPart Restock email: {$restockId}")
             ->success()
             ->send();
 

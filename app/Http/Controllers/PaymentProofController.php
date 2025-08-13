@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Transaction;
+use App\Filament\Resources\TransactionResource;
 
 class PaymentProofController extends Controller
 {
@@ -25,6 +26,11 @@ class PaymentProofController extends Controller
             'proof' => $path,
         ]);
 
-        return redirect()->back()->with('success', 'Bukti pembayaran berhasil diupload.');
+        return redirect()
+    ->route('filament.admin.resources.transactions.email-payment', [
+        'record' => $transaction->id,
+    ])
+    ->with('success', '✅ Proof uploaded successfully for Sales Order: ' . ($transaction->salesOrder->sales_order_no ?? 'Unknown'));
+
     }
 }

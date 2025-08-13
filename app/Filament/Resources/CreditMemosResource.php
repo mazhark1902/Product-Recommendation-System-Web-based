@@ -68,7 +68,7 @@ class CreditMemosResource extends Resource
 
         if (!$dealerEmail) {
             \Filament\Notifications\Notification::make()
-                ->title('Email dealer tidak ditemukan.')
+                ->title('Dealer email not found.')
                 ->danger()
                 ->send();
             return;
@@ -96,7 +96,7 @@ class CreditMemosResource extends Resource
         });
 
         \Filament\Notifications\Notification::make()
-            ->title("Berhasil Generate Document Credit Memo & Send Email ke: {$dealerEmail}")
+            ->title("Successfully Generate Document Credit Memo & Send Email to: {$dealerEmail}")
             ->success()
             ->send();
     }),
