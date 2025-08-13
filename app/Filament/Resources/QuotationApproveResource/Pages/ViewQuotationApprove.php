@@ -28,7 +28,7 @@ class ViewQuotationApprove extends ViewRecord
     protected function getActions(): array
     {
         return [
-                        Action::make('Approve')
+                Action::make('Approve')
                 ->label('Approve')
                 ->color('success')
                 ->requiresConfirmation()
@@ -126,7 +126,7 @@ class ViewQuotationApprove extends ViewRecord
                     });
 
                     Notification::make()
-                        ->title("Sales Order, Delivery Order, dan Quotation PDF berhasil dibuat & dikirim.")
+                        ->title("Sales Order, Delivery Order, And Quotation PDF Successfully Created & Sent")
                         ->success()
                         ->send();
 
@@ -186,7 +186,7 @@ class ViewQuotationApprove extends ViewRecord
         }
 
         Notification::make()
-            ->title("Sales Order $salesOrderId berhasil dibuat dari Quotation {$quotation->quotation_id}")
+            ->title("Sales Order $salesOrderId Successfully Created From Quotation: {$quotation->quotation_id}")
             ->success()
             ->send();
 

@@ -1,5 +1,19 @@
 
 <x-filament::page>
+    @if(session('success'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            window.filamentNotifications?.notify({
+                title: '✅ Proof Uploaded Successfully',
+                body: '<strong style="color: #0d6efd;">' + @json(session('success')) + '</strong>',
+                status: 'success',
+                duration: 6000,
+                icon: 'heroicon-o-document-check'
+            });
+        });
+    </script>
+@endif
+
     
     <div class="space-y-6">
         <h2 class="text-xl font-bold">Email & Payment for Invoice: {{ $record->invoice_id }}</h2>
@@ -40,6 +54,7 @@
     Save Proof
 </x-filament::button>
 </form>
+
 
         </div>
     </div>
@@ -83,6 +98,12 @@
 >
     <span x-text="message"></span>
 </div>
+<script>
+window.addEventListener('open-pdf', event => {
+    window.open(event.detail.url, '_blank');
+});
+</script>
+
 
 </x-filament::page>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
