@@ -25,7 +25,7 @@ class AdminDashboardInventory extends BaseWidget
         // Calculate the total value of the inventory
         $totalValue = Inventory::query()
             ->join('sub_parts', 'inventory.product_id', '=', 'sub_parts.sub_part_number')
-            ->sum(DB::raw('inventory.quantity_available * sub_parts.price'));
+            ->sum(DB::raw('inventory.quantity_available * sub_parts.cost'));
 
         // Get the values from the query result, defaulting to 0 if null
         $availableStock = $stockTotals->total_available ?? 0;

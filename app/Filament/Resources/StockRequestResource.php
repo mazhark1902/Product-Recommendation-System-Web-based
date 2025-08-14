@@ -52,7 +52,8 @@ class StockRequestResource extends Resource implements HasShieldPermissions
                                     ->relationship('subPart', 'sub_part_name')
                                     ->searchable()->required(),
                                 Forms\Components\TextInput::make('quantity_requested')
-                                    ->numeric()->required()->minValue(1),
+                                    ->numeric()->required()->minValue(1)->extraAttributes([
+                        'onkeydown' => "if(event.key==='-'){event.preventDefault();}"]),
                             ])
                             ->columns(2)->defaultItems(1)->reorderable(false)
                             ->addActionLabel('Add More Items'),

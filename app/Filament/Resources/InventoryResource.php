@@ -42,10 +42,14 @@ class InventoryResource extends Resource
                     ->required()
                     ->unique(ignoreRecord: true)
                     ->disabledOn('edit'),
-                Forms\Components\TextInput::make('quantity_available')->label('Available Stock')->numeric()->required()->default(0),
-                Forms\Components\TextInput::make('minimum_stock')->label('Minimum Stock')->numeric()->required()->default(10),
+                Forms\Components\TextInput::make('quantity_available')->label('Available Stock')->numeric()->required()->default(0)->minValue(0)->extraAttributes([
+        'onkeydown' => "if(event.key==='-'){event.preventDefault();}"]),
+                Forms\Components\TextInput::make('minimum_stock')->label('Minimum Stock')->numeric()->required()->default(10)->minValue(0)->extraAttributes([
+        'onkeydown' => "if(event.key==='-'){event.preventDefault();}"]),
                 Forms\Components\TextInput::make('quantity_reserved')->label('Reserved Stock')->numeric()->default(0)->disabled(),
-                Forms\Components\TextInput::make('quantity_damaged')->label('Damaged Stock')->numeric()->default(0),
+                Forms\Components\TextInput::make('quantity_damaged')->label('Damaged Stock')->numeric()->default(0)->minValue(0)->extraAttributes([
+        'onkeydown' => "if(event.key==='-'){event.preventDefault();}"
+    ]),
                 Forms\Components\TextInput::make('location')->label('Storage Location')->maxLength(100),
             ]);
     }

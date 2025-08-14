@@ -46,6 +46,8 @@ class SubPartResource extends Resource
                     ->label('Price')
                     ->numeric()
                     ->required()
+                    ->extraAttributes([
+                        'onkeydown' => "if(event.key==='-'){event.preventDefault();}"])
                     ->prefix('IDR'), // Assuming IDR
 
                 // --- TAMBAHKAN INPUT BARU DI SINI ---
@@ -54,6 +56,8 @@ class SubPartResource extends Resource
                     ->numeric()
                     ->required()
                     ->default(0)
+                    ->extraAttributes([
+                        'onkeydown' => "if(event.key==='-'){event.preventDefault();}"])
                     ->prefix('IDR'),
             ]);
     }

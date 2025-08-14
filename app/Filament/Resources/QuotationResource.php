@@ -106,6 +106,11 @@ class QuotationResource extends Resource
                         TextInput::make('quantity')
                             ->numeric()
                             ->reactive()
+                            ->minValue(0)
+                            ->extraAttributes([
+                            'onkeydown' => "if(event.key==='-'){event.preventDefault();}"])
+                    
+                            // ->default(0)
                             ->afterStateUpdated(function ($state, callable $get, callable $set) {
                                 $subtotal = ($state ?? 0) * ($get('unit_price') ?? 0);
                                 $set('subtotal', $subtotal);

@@ -38,7 +38,7 @@ class AdminDashboard extends Page
             TopCustomerBarChart::class,
             MostReturnedProductsChart::class,
             // OrderFrequencyByCustomer::class,
-            churnriskchart::class,
+            // churnriskchart::class,
 
             
         ];

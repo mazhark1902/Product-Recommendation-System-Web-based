@@ -73,7 +73,8 @@ public static function form(Forms\Form $form): Forms\Form
                 ->searchable()
                 ->required()
                 ->disabled(fn ($get) => empty($get('sales_order_id'))),
-            Forms\Components\TextInput::make('quantity')->numeric()->required(),
+            Forms\Components\TextInput::make('quantity')->numeric()->required()->extraAttributes([
+                        'onkeydown' => "if(event.key==='-'){event.preventDefault();}"]),
             Forms\Components\DatePicker::make('return_date')->required(),
             Forms\Components\Select::make('reason')
                 ->options([
