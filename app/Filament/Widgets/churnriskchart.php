@@ -10,7 +10,7 @@ use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 class churnriskchart extends ChartWidget
 {
     use HasWidgetShield;
-    protected static ?string $heading = 'Customer Churn Risk';
+    protected static ?string $heading = 'Customer RFM Grouping';
     protected static ?int $sort = 6;
 
     // ✅ Tambahkan dropdown filter berdasarkan dealer

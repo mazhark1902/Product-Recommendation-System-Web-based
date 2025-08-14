@@ -1,31 +1,41 @@
-<x-filament::page>
+<x-filament-panels::page>
     {{-- CARD INFORMASI --}}
     <x-filament::card>
         <h2 class="text-xl font-bold mb-4">Sales Order Overview</h2>
         <p><strong>Sales Order ID:</strong> {{ $record->sales_order_id }}</p>
-        <p><strong>Status:</strong> {{ $record->status }}</p>
+        <p>
+            <strong>Status:</strong> 
+            <span @class([
+                'font-medium',
+                'text-gray-600' => $record->status === 'draft',
+                'text-success-600' => $record->status === 'confirmed' || $record->status === 'delivered',
+                'text-danger-600' => $record->status === 'rejected',
+            ])>
+                {{ ucfirst($record->status) }}
+            </span>
+        </p>
         <p><strong>Delivery Address:</strong> {{ $record->delivery_address }}</p>
 
         <p>
             <strong>Status Stock:</strong>
             @if ($allAvailable)
-                <span class="text-green-600" style="color: #16a34a;">Available</span>
+                <span class="font-medium text-success-600">Available</span>
             @else
-                <span class="text-red-600" style="color: #dc2626;">Empty</span>
+                <span class="font-medium text-danger-600">Insufficient</span>
             @endif
         </p>
 
         <p>
-    <strong>Email Dealer:</strong>
-    {{ $record->dealer->email ?? '-' }}
-</p>
+            <strong>Email Dealer:</strong>
+            {{ $record->dealer->email ?? '-' }}
+        </p>
         <hr class="my-4">
 
         <h3 class="font-semibold mb-2">Order & Delivery Details</h3>
 
         <div class="overflow-x-auto">
             <table class="w-full border border-gray-300 text-sm">
-                <thead class="bg-gray-100">
+                <thead class="bg-gray-100 dark:bg-gray-800">
                     <tr>
                         <th class="border px-2 py-1 text-left">Product</th>
                         <th class="border px-2 py-1 text-center">Order Quantity</th>
@@ -58,17 +68,30 @@
         </div>
     </x-filament::card>
 
-    {{-- TOMBOL AKSI --}}
-    <div class="mt-4 flex gap-2">
-        @if ($allAvailable)
-            <x-filament::button wire:click="confirmOrder" color="success">Generate & Sent Invoice</x-filament::button>
-            <x-filament::button wire:click="rejectOrder" color="danger">Reject</x-filament::button>
+    {{-- ============================================ --}}
+    {{-- PERBAIKAN LOGIKA TOMBOL AKSI DIMULAI DI SINI --}}
+    {{-- ============================================ --}}
+    <div class="mt-4">
+        {{-- Tampilkan tombol aksi hanya jika status order adalah 'draft' --}}
+        @if ($record->status === 'confirmed')
+            <div class="flex gap-2">
+                @if ($allAvailable)
+                    {{-- Stok tersedia, tombol utama aktif --}}
+                    <x-filament::button wire:click="confirmOrder" color="success">Generate & Sent Invoice</x-filament::button>
+                    <x-filament::button wire:click="rejectOrder" color="danger">Reject</x-filament::button>
+                @else
+                    {{-- Stok tidak cukup, tombol utama nonaktif --}}
+                    <x-filament::button color="success" disabled title="Stock is not sufficient to generate an invoice.">Generate & Sent Invoice</x-filament::button>
+                    <x-filament::button wire:click="rejectOrder" color="danger">Reject</x-filament::button>
+                    <x-filament::button wire:click="checkStock" color="gray">Check Stock</x-filament::button>
+                    <x-filament::button wire:click="emailRestock" color="warning">Email Restock</x-filament::button>
+                @endif
+            </div>
         @else
-            <x-filament::button color="success" disabled>Generate & Sent Invoice</x-filament::button>
-            <x-filament::button wire:click="rejectOrder" color="danger">Reject</x-filament::button>
-            <x-filament::button wire:click="checkStock" color="gray">Check Stock</x-filament::button>
-            <x-filament::button wire:click="emailRestock" color="warning">Email Restock</x-filament::button>
-
+            {{-- Jika status BUKAN 'draft', tampilkan pesan informasi --}}
+            <div class="p-4 text-sm text-blue-800 rounded-lg bg-blue-50 dark:bg-gray-800 dark:text-blue-400" role="alert">
+                <span class="font-medium">This sales order has not yet been confirmed.</span> Its current status is '{{ $record->status }}'. No further actions can be taken from this page.
+            </div>
         @endif
     </div>
-</x-filament::page>
+</x-filament-panels::page>
