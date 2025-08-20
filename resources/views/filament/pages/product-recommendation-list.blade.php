@@ -21,10 +21,10 @@
     @if ($recommendation)
         <div class="p-4 border rounded bg-white shadow-md">
             <p><strong>Dealer ID:</strong> {{ $recommendation->dealer_id }}</p>
-            <p><strong>Kategori Rekomendasi:</strong> {{ $recommendation->recommended_category }}</p>
-            <p><strong>Skor:</strong> {{ number_format($recommendation->score, 4) }}</p>
+            <p><strong>Part Recommended:</strong> {{ $recommendation->recommended_category }}</p>
+            <p><strong>Score:</strong> {{ number_format($recommendation->score, 4) }}</p>
         </div>
     @elseif ($selectedDealer)
-        <div class="text-red-500">Data rekomendasi tidak ditemukan untuk dealer ini.</div>
+        <div class="text-red-500">Recommendation data is not found.</div>
     @endif
 </x-filament::page>
