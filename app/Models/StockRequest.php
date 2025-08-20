@@ -14,9 +14,15 @@ class StockRequest extends Model
     protected $fillable = [
         'request_id',
         'user_id',
+        'warehouse_id', // <-- TAMBAHKAN
         'status',
         'notes',
     ];
+
+    public function warehouse(): BelongsTo
+    {
+        return $this->belongsTo(Warehouse::class);
+    }
 
     public function user(): BelongsTo
     {

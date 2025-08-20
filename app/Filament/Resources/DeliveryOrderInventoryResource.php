@@ -40,6 +40,23 @@ class DeliveryOrderInventoryResource extends Resource
         return 'Delivery Orders Inventory';
     }
 
+    public static function isStockSufficient(DeliveryOrderInventory $record): bool
+    {
+        $record->load('items.part');
+
+        foreach ($record->items as $item) {
+            $inventory = Inventory::where('product_id', $item->part_number)->first();
+            $effectiveStock = ($inventory->quantity_available ?? 0) - ($inventory->quantity_reserved ?? 0);
+
+            if (!$inventory || $effectiveStock < $item->quantity) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+
     public static function table(Table $table): Table
     {
         return $table
@@ -114,7 +131,7 @@ class DeliveryOrderInventoryResource extends Resource
                             Notification::make()->title('Insufficient Stock!')->danger()->body($message)->persistent()->send();
                         }
                     })
-                    ->visible(fn(DeliveryOrderInventory $record) => $record->status === 'pending'),
+                    ->visible(fn(DeliveryOrderInventory $record) => $record->status === 'pending' && !static::isStockSufficient($record)),
 
                 Action::make('confirm_delivery')
                     ->label('Confirm & Ship')->icon('heroicon-o-check-circle')->color('success')->requiresConfirmation()
@@ -138,7 +155,6 @@ class DeliveryOrderInventoryResource extends Resource
                                         throw new \Exception("Stock for {$item->part_number} is no longer sufficient.");
                                     }
 
-                                    // **LOGIKA YANG DIPERBAIKI DAN DISATUKAN**
                                     $inventory->decrement('quantity_available', $item->quantity);
                                     if ($inventory->quantity_reserved >= $item->quantity) {
                                         $inventory->decrement('quantity_reserved', $item->quantity);
@@ -165,7 +181,6 @@ class DeliveryOrderInventoryResource extends Resource
                                 
                                 $isReplacement = Str::startsWith($record->notes, 'Replacement for return');
                                 if (!$isReplacement && $record->salesOrder) {
-                                    // **PERBAIKAN KECIL**: Status SO seharusnya 'delivered', bukan 'confirmed'
                                     $record->salesOrder->update(['status' => 'confirmed']);
                                 }
 
@@ -180,7 +195,9 @@ class DeliveryOrderInventoryResource extends Resource
                             Notification::make()->title('Process Failed')->body($e->getMessage())->danger()->send();
                         }
                     })
-                    ->visible(fn(DeliveryOrderInventory $record) => $record->status === 'ready'),
+                    ->visible(function(DeliveryOrderInventory $record) {
+                        return $record->status === 'ready' || ($record->status === 'pending' && static::isStockSufficient($record));
+                    }),
                 
                 Action::make('reject_delivery')
                     ->label('Reject Delivery')
@@ -219,7 +236,9 @@ class DeliveryOrderInventoryResource extends Resource
                         }
                     })
                     ->visible(fn(DeliveryOrderInventory $record) => in_array($record->status, ['pending', 'ready'])),
-            ]);
+            ])
+            // --- PERUBAHAN DI SINI ---
+            ->defaultSort('created_at', 'desc'); 
     }
 
     public static function getRelations(): array

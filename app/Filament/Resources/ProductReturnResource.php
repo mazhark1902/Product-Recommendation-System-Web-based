@@ -51,10 +51,6 @@ class ProductReturnResource extends Resource
                 TextColumn::make('return_date')->label('Return Date')->date()->sortable(),
                 BadgeColumn::make('refund_action')->label('Action')
                     ->colors(['info' => 'RETURN', 'primary' => 'CREDIT_MEMO']),
-                // BadgeColumn::make('status')
-                //     ->label('Process Status')
-                //     ->getStateUsing(fn (ProductReturn $record): string => !is_null($record->condition) ? 'Processed' : 'Pending')
-                //     ->colors(['warning' => 'Pending', 'success' => 'Processed']),
                 BadgeColumn::make('condition')->label('Condition')
                     ->placeholder('Not Set')
                     ->colors(['success' => 'GOOD', 'danger' => 'DAMAGED']),
@@ -78,14 +74,12 @@ class ProductReturnResource extends Resource
                         TextEntry::make('condition')->badge()->placeholder('Not Set')->colors(['success' => 'GOOD', 'danger' => 'DAMAGED']),
                         TextEntry::make('reason'),
                         TextEntry::make('refund_action')->badge()->colors(['info' => 'RETURN', 'primary' => 'CREDIT_MEMO'])
-                        // TextEntry::make('status')->label('Process Status')->badge()
                             ->getStateUsing(fn (ProductReturn $record): string => !is_null($record->condition) ? 'Processed' : 'Pending')
                             ->colors(['warning' => 'Pending', 'success' => 'Processed']),
                     ])
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Close'),
 
-                // --- Tombol Tahap 1: Set Kondisi & Langsung Update Stok ---
                 Action::make('set_condition_and_process_stock')
                     ->label('Set Condition & Process')
                     ->icon('heroicon-o-tag')
@@ -99,16 +93,12 @@ class ProductReturnResource extends Resource
                     ->action(function (ProductReturn $record, array $data): void {
                         try {
                             DB::transaction(function () use ($record, $data) {
-                                // 1. Update kondisi di record return
                                 $record->update(['condition' => $data['condition']]);
-
-                                // 2. Cari atau buat record inventory
                                 $inventory = Inventory::firstOrCreate(
                                     ['product_id' => $record->part_number],
                                     ['quantity_available' => 0, 'minimum_stock' => 10, 'quantity_damaged' => 0]
                                 );
 
-                                // 3. Update stok berdasarkan kondisi
                                 if ($data['condition'] === 'GOOD') {
                                     $inventory->increment('quantity_available', $record->quantity);
                                     $notes = "Stock in from return #{$record->return_id}, Condition: GOOD";
@@ -117,7 +107,6 @@ class ProductReturnResource extends Resource
                                     $notes = "Stock in from return #{$record->return_id}, Condition: DAMAGED";
                                 }
 
-                                // 4. Catat pergerakan inventory
                                 InventoryMovement::create([
                                     'inventory_movement_id' => 'IM-' . strtoupper(Str::random(8)),
                                     'product_id' => $record->part_number,
@@ -136,7 +125,6 @@ class ProductReturnResource extends Resource
                     })
                     ->visible(fn (ProductReturn $record): bool => is_null($record->condition)),
 
-                // --- Tombol Tahap 2: Buat Pengiriman Pengganti dengan RESERVASI ---
                 Action::make('create_replacement')
                     ->label('Create Replacement')
                     ->icon('heroicon-o-truck')
@@ -147,33 +135,28 @@ class ProductReturnResource extends Resource
                     ->action(function (ProductReturn $record) {
                         try {
                             DB::transaction(function () use ($record) {
-                                // **LANGKAH BARU: CEK KETERSEDIAAN STOK SEBELUM RESERVASI**
                                 $inventory = Inventory::where('product_id', $record->part_number)->lockForUpdate()->first();
                                 $effectiveStock = ($inventory->quantity_available ?? 0) - ($inventory->quantity_reserved ?? 0);
                                 if (!$inventory || $effectiveStock < $record->quantity) {
                                     throw new \Exception("Insufficient stock for replacement. Required: {$record->quantity}, Available: {$effectiveStock}.");
                                 }
 
-                                // 1. Buat Delivery Order baru
                                 $lastDO = DeliveryOrderInventory::orderBy('delivery_order_id', 'desc')->first();
                                 $newDoId = 'DO' . str_pad((int) Str::after($lastDO->delivery_order_id ?? 'DO00000', 'DO') + 1, 5, '0', STR_PAD_LEFT);
                                 $deliveryOrder = DeliveryOrderInventory::create([
                                     'delivery_order_id' => $newDoId,
-                                    'sales_order_id' => $record->sales_order_id, // Gunakan SO ID lama sebagai referensi
+                                    'sales_order_id' => $record->sales_order_id,
                                     'delivery_date' => now(),
-                                    'status' => 'pending', // Status awal DO adalah pending
+                                    'status' => 'pending',
                                     'notes' => 'Replacement for return ' . $record->return_id,
                                 ]);
 
-                                // 2. Tambahkan item ke DO baru
                                 DeliveryItem::create([
                                     'delivery_order_id' => $deliveryOrder->delivery_order_id,
                                     'part_number' => $record->part_number,
                                     'quantity' => $record->quantity,
                                 ]);
 
-                                // **LANGKAH BARU: BUAT RESERVASI STOK**
-                                // Kita gunakan sales_order_id dari return sebagai referensi
                                 StockReservation::create([
                                     'part_number' => $record->part_number,
                                     'sales_order_id' => $record->sales_order_id,
@@ -182,7 +165,6 @@ class ProductReturnResource extends Resource
                                     'status' => 'ACTIVE',
                                 ]);
 
-                                // **LANGKAH BARU: UPDATE KOLOM quantity_reserved DI INVENTORY**
                                 $inventory->increment('quantity_reserved', $record->quantity);
 
                             });
@@ -195,7 +177,9 @@ class ProductReturnResource extends Resource
                         $replacementExists = DeliveryOrderInventory::where('notes', 'Replacement for return ' . $record->return_id)->exists();
                         return $record->refund_action === 'RETURN' && !is_null($record->condition) && !$replacementExists;
                     }),
-            ]);
+            ])
+            // --- PERUBAHAN DI SINI ---
+            ->defaultSort('created_at', 'desc');
     }
 
     public static function getPages(): array

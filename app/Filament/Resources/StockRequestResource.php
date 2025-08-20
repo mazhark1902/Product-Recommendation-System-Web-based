@@ -37,6 +37,12 @@ class StockRequestResource extends Resource implements HasShieldPermissions
                         Forms\Components\TextInput::make('request_id')
                             ->default('REQ-' . strtoupper(Str::random(8)))
                             ->disabled()->dehydrated()->required(),
+
+                        Forms\Components\Select::make('warehouse_id')
+                            ->relationship('warehouse', 'name')
+                            ->label('Destination Warehouse')
+                            ->required(),
+
                         Forms\Components\Select::make('user_id')
                             ->relationship('user', 'name')->label('Requester')
                             ->default(auth()->id())->disabled()->dehydrated()->required(),
@@ -108,7 +114,8 @@ class StockRequestResource extends Resource implements HasShieldPermissions
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([Tables\Actions\DeleteBulkAction::make()]),
-            ]);
+            ])
+            ->defaultSort('created_at', 'desc');
     }
 
     // Fungsi helper untuk logika approval
@@ -116,10 +123,14 @@ class StockRequestResource extends Resource implements HasShieldPermissions
     {
         try {
             DB::transaction(function () use ($record) {
+                if (is_null($record->warehouse_id)) {
+                    throw new \Exception("Destination warehouse has not been set.");
+                }
+
                 foreach ($record->items as $item) {
                     $inventory = Inventory::firstOrCreate(
-                        ['product_id' => $item->sub_part_number],
-                        ['quantity_available' => 0] // Default jika item baru
+                        ['product_id' => $item->sub_part_number, 'warehouse_id' => $record->warehouse_id],
+                        ['quantity_available' => 0]
                     );
                     $inventory->increment('quantity_available', $item->quantity_requested);
                     
@@ -131,7 +142,7 @@ class StockRequestResource extends Resource implements HasShieldPermissions
                         'movement_date' => now(),
                         'reference_type' => 'STOCK_REQUEST',
                         'reference_id' => $record->id,
-                        'notes' => "Approved stock request: #{$record->request_id}",
+                        'notes' => "Approved request: #{$record->request_id} into Warehouse: {$record->warehouse->name}",
                     ]);
                     $item->update(['quantity_received' => $item->quantity_requested]);
                 }
