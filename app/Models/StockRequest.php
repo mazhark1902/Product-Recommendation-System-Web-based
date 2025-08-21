@@ -15,6 +15,8 @@ class StockRequest extends Model
         'request_id',
         'user_id',
         'warehouse_id', // <-- TAMBAHKAN
+        'source_type',      // <-- TAMBAHKAN
+        'source_reference', // <-- TAMBAHKAN
         'status',
         'notes',
     ];
