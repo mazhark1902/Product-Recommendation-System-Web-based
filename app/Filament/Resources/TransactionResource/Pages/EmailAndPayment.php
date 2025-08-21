@@ -255,6 +255,11 @@ public function submit()
                             'Bank Transfer' => 'Bank Transfer',
                             'Credit Note' => 'Credit Note',
                             'Credit Note & Bank Transfer' => 'Credit Note & Bank Transfer',
+                            'Cash' => 'Cash',
+                            'Giro/Cheque' => 'Giro/Cheque',
+                            'virtual account' => 'Virtual Account',
+
+
                         ])
                         ->required(),
                 ])

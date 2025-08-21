@@ -60,22 +60,38 @@ class DeliveryOrderSalesResource extends Resource
         ]);
 }
 
-    public static function table(Table $table): Table
-    {
-        return $table
-            ->columns([
-                TextColumn::make('delivery_order_id')->searchable()->sortable(),
-                TextColumn::make('sales_order_id')->searchable()->sortable(),
-                TextColumn::make('delivery_date')->date(),
-                TextColumn::make('status')->badge()->sortable(),
-                TextColumn::make('notes')->limit(30),
-            ])
-            ->actions([
-                Action::make('view')
-                    ->label('View Detail')
-                    ->url(fn ($record) => DeliveryOrderSalesResource::getUrl('view', ['record' => $record])),
-            ]);
-    }
+public static function table(Table $table): Table
+{
+    return $table
+        ->columns([
+            TextColumn::make('delivery_order_id')
+                ->searchable()
+                ->sortable(),
+
+            TextColumn::make('sales_order_id')
+                ->searchable()
+                ->sortable(),
+
+            TextColumn::make('delivery_date')
+                ->date()
+                ->sortable(),
+
+            TextColumn::make('status')
+                ->badge()
+                ->sortable(),
+
+            TextColumn::make('notes')
+                ->limit(30)
+                ->sortable(), // biar bisa diurutkan juga walau dibatasi
+        ])
+        ->defaultSort('delivery_date', 'desc') // urut default terbaru
+        ->actions([
+            Action::make('view')
+                ->label('View Detail')
+                ->url(fn ($record) => DeliveryOrderSalesResource::getUrl('view', ['record' => $record])),
+        ]);
+}
+
 
     public static function getRelations(): array
     {

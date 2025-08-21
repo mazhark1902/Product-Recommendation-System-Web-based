@@ -15,5 +15,10 @@ class QuotationItem extends Model
     {
         return $this->belongsTo(Quotation::class, 'quotation_id', 'quotation_id');
     }
+    public function subPart()
+{
+    return $this->belongsTo(\App\Models\SubPart::class, 'sub_part_number', 'sub_part_number');
+}
+
 }
 

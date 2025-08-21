@@ -94,20 +94,39 @@ public static function form(Forms\Form $form): Forms\Form
     }
 
     
-    public static function table(Tables\Table $table): Tables\Table
-    {
-        return $table->columns([
-            TextColumn::make('return_id')->sortable(),
-            TextColumn::make('sales_order_id'),
-            TextColumn::make('part_number'),
-            TextColumn::make('quantity'),
-            TextColumn::make('refund_action'),
-            TextColumn::make('return_date')->date(),
-        ])->actions([
+public static function table(Tables\Table $table): Tables\Table
+{
+    return $table
+        ->columns([
+            TextColumn::make('return_id')
+                ->sortable()
+                ->searchable(),
+
+            TextColumn::make('sales_order_id')
+                ->sortable()
+                ->searchable(),
+
+            TextColumn::make('part_number')
+                ->sortable()
+                ->searchable(),
+
+            TextColumn::make('quantity')
+                ->sortable(),
+
+            TextColumn::make('refund_action')
+                ->sortable(),
+
+            TextColumn::make('return_date')
+                ->date()
+                ->sortable(),
+        ])
+        ->defaultSort('created_at', 'desc') // urutkan dari terbaru
+        ->actions([
             Tables\Actions\EditAction::make(),
             Tables\Actions\ViewAction::make(),
         ]);
-    }
+}
+
 
     public static function getRelations(): array
     {

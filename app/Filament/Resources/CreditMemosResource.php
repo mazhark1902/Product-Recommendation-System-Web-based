@@ -39,19 +39,41 @@ class CreditMemosResource extends Resource
 {
     return $table
         ->columns([
-            Tables\Columns\TextColumn::make('credit_memos_id')->label('Credit Memo ID')->searchable()->sortable(),
-            Tables\Columns\TextColumn::make('return_id')->label('Return ID')->sortable(),
-            Tables\Columns\TextColumn::make('customer_id')->label('Dealer')->searchable()->sortable(),
-            Tables\Columns\TextColumn::make('amount')->label('Amount')->money('IDR'),
-            Tables\Columns\TextColumn::make('issued_date')->label('Issued At')->dateTime(),
+            Tables\Columns\TextColumn::make('credit_memos_id')
+                ->label('Credit Memo ID')
+                ->searchable()
+                ->sortable(),
+
+            Tables\Columns\TextColumn::make('return_id')
+                ->label('Return ID')
+                ->searchable()
+                ->sortable(),
+
+            Tables\Columns\TextColumn::make('outlet.dealer.dealer_name')
+                ->label('Dealer')
+                ->searchable()
+                ->sortable(),
+
+            Tables\Columns\TextColumn::make('amount')
+                ->label('Amount')
+                ->money('IDR')
+                ->sortable(),
+
+            Tables\Columns\TextColumn::make('issued_date')
+                ->label('Issued At')
+                ->dateTime()
+                ->sortable(),
+
             Tables\Columns\BadgeColumn::make('status')
                 ->colors([
                     'primary' => 'ISSUED',
                     'success' => 'PAID',
                     'danger' => 'EXPIRED',
                 ])
-                ->label('Status'),
+                ->label('Status')
+                ->sortable(),
         ])
+        ->defaultSort('issued_date', 'desc') // tampil dari issued_date terbaru
         ->filters([
             //
         ])

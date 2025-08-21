@@ -146,93 +146,63 @@ class QuotationResource extends Resource
             ]);
     }
 
-    public static function table(Table $table): Table
-    {
-        return $table
-            ->columns([
-                TextColumn::make('quotation_id')->searchable(),
-                TextColumn::make('outlet_code')->searchable(),
-                TextColumn::make('quotation_date'),
-                BadgeColumn::make('status')
-                    ->colors([
-                        'warning' => 'Pending',
-                        'success' => 'Approved',
-                        'danger' => 'Rejected',
-                    ]),
-                TextColumn::make('total_amount')->money('IDR'),
-            ])
-            ->actions([
-                Action::make('Edit')
+public static function table(Table $table): Table
+{
+    return $table
+        ->query(
+            Quotation::query()->latest('quotation_date') // default urut dari terbaru
+        )
+        ->columns([
+            TextColumn::make('quotation_id')
+                ->searchable()
+                ->sortable(),
+
+            TextColumn::make('outlet.outlet_name')
+                ->label('Outlet Name')
+                ->searchable()
+                ->sortable(),
+
+            TextColumn::make('quotation_date')
+                ->sortable(),
+
+            BadgeColumn::make('status')
+                ->colors([
+                    'warning' => 'Pending',
+                    'success' => 'Approved',
+                    'danger' => 'Rejected',
+                ])
+                ->sortable(),
+
+            TextColumn::make('total_amount')
+                ->money('IDR')
+                ->sortable(),
+        ])
+        ->defaultSort('quotation_date', 'desc') // default urut terbaru
+        ->actions([
+            Action::make('Edit')
                 ->slideOver()  
                 ->label('Edit')
                 ->url(fn (Quotation $record) => $record->status === 'Pending'
                     ? route('filament.admin.resources.quotations.edit', ['record' => $record])
                     : null)
                 ->visible(fn (Quotation $record) => $record->status === 'Pending'),
-                // ->openUrlInNewTab()
 
-                Action::make('View Detail')
+            Action::make('View Detail')
                 ->label('View')
                 ->icon('heroicon-o-eye')
                 ->url(fn ($record) => QuotationResource::getUrl('view-detail', ['record' => $record]))
                 ->openUrlInNewTab(),
-            ])
-            ->filters([
-                // 1. Filter Status
-                SelectFilter::make('status')
-                    ->label('Status')
-                    ->options([
-                        'Pending' => 'Pending',
-                        'Approved' => 'Approved',
-                        'Rejected' => 'Rejected',
-                    ])
-                    ->query(function (Builder $query, array $data) {
-                        if (!empty($data['value'])) {
-                            $query->where('status', $data['value']);
-                        }
-                    }),
-            
-                // 2. Filter Tahun Quotation Date
-                SelectFilter::make('quotation_year')
-                    ->label('Quotation Year')
-                    ->options(
-                        fn () => \App\Models\Quotation::query()
-                            ->selectRaw('YEAR(quotation_date) as year')
-                            ->distinct()
-                            ->orderBy('year', 'desc')
-                            ->pluck('year', 'year')
-                            ->filter()
-                            ->toArray()
-                    )
-                    ->query(function (Builder $query, array $data) {
-                        if (!empty($data['value'])) {
-                            $query->whereYear('quotation_date', $data['value']);
-                        }
-                    }),
-            
-                // 3. Filter Total Amount
-                SelectFilter::make('total_amount_range')
-                    ->label('Total Amount')
-                    ->options([
-                        'below' => '< 100,000',
-                        'above' => '>= 100,000',
-                    ])
-                    ->query(function (Builder $query, array $data) {
-                        if ($data['value'] === 'below') {
-                            $query->where('total_amount', '<', 100000);
-                        } elseif ($data['value'] === 'above') {
-                            $query->where('total_amount', '>=', 100000);
-                        }
-                    }),
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ]);            
+        ])
+        ->filters([
+            // filter tetap
+        ])
+        ->bulkActions([
+            Tables\Actions\BulkActionGroup::make([
+                Tables\Actions\DeleteBulkAction::make(),
+            ]),
+        ]);
+}
 
-                
-    }
 
     public static function getRelations(): array
     {

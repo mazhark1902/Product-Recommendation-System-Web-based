@@ -47,7 +47,11 @@ class QuotationApproveResource extends Resource
                 TextColumn::make('quotation_id')
                 ->searchable()
                 ->sortable(), // Tambahkan sortable di sini,
-                TextColumn::make('outlet_code'),
+                 // ubah outlet_code jadi relasi outlet_name
+                TextColumn::make('outlet.outlet_name')
+                    ->label('Outlet')
+                    ->sortable()
+                    ->searchable(),
                 TextColumn::make('quotation_date')->date(),
                 BadgeColumn::make('status')
                     ->colors([

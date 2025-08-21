@@ -26,62 +26,71 @@ class SalesOrderResource extends Resource
         return $form->schema([]);
     }
 
-    public static function table(Table $table): Table
-    {
-        return $table
-            ->columns([
-                Tables\Columns\TextColumn::make('sales_order_id')
+public static function table(Table $table): Table
+{
+    return $table
+        ->query(
+            SalesOrder::query()->latest('created_at') // urutkan dari terbaru
+        )
+        ->columns([
+            Tables\Columns\TextColumn::make('sales_order_id')
                 ->label('Order ID')
                 ->sortable()
                 ->searchable(),
-            
+
             Tables\Columns\TextColumn::make('outlet.dealer.dealer_name')
-                ->label('Dealer'),
-            
+                ->label('Dealer')
+                ->sortable(),
+
             Tables\Columns\TextColumn::make('outlet.outlet_name')
-                ->label('Outlet'),
-                
-                Tables\Columns\TextColumn::make('total_amount')
+                ->label('Outlet')
+                ->sortable(),
+
+            Tables\Columns\TextColumn::make('total_amount')
                 ->label('Total Amount')
-                ->money('IDR', true), // true untuk ribuan separator
+                ->money('IDR', true)
+                ->sortable(),
 
-                Tables\Columns\TextColumn::make('status')
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'draft' => 'gray',
-                        'delivered' => 'success',
-                        'rejected' => 'danger',
-                        default => 'primary',
-                    }),
+            Tables\Columns\TextColumn::make('status')
+                ->badge()
+                ->sortable()
+                ->color(fn (string $state): string => match ($state) {
+                    'draft' => 'gray',
+                    'confirmed' => 'warning',
+                    'delivered' => 'success',
+                    'rejected' => 'danger',
+                    default => 'primary',
+                }),
 
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label('Created At')
-                    ->dateTime('d M Y, H:i'),
-            ])
-            ->filters([
-                // Tambahkan filter jika diperlukan
-            ])
-            ->actions([
-                Action::make('view_detail')
-                    ->label('View Detail')
-                    ->icon('heroicon-o-eye')
-                    ->url(fn (SalesOrder $record) => route('filament.admin.resources.sales-orders.view', ['record' => $record]))
-                    ->openUrlInNewTab(),
+            Tables\Columns\TextColumn::make('created_at')
+                ->label('Created At')
+                ->dateTime('d M Y, H:i')
+                ->sortable(),
+        ])
+        ->filters([
+            // Tambahkan filter jika perlu
+        ])
+        ->actions([
+            Action::make('view_detail')
+                ->label('View Detail')
+                ->icon('heroicon-o-eye')
+                ->url(fn (SalesOrder $record) => route('filament.admin.resources.sales-orders.view', ['record' => $record]))
+                ->openUrlInNewTab(),
 
-                Action::make('generate_invoice')
-                    ->label('Generate Invoice')
-                    ->icon('heroicon-o-document-text')
-                    ->url(fn (SalesOrder $record) => route('filament.admin.resources.sales-orders.generating-invoice', ['record' => $record]))
-                    ->openUrlInNewTab()
-                    ->visible(fn (SalesOrder $record) => in_array($record->status, ['draft', 'confirmed'])),
+            Action::make('generate_invoice')
+                ->label('Generate Invoice')
+                ->icon('heroicon-o-document-text')
+                ->url(fn (SalesOrder $record) => route('filament.admin.resources.sales-orders.generating-invoice', ['record' => $record]))
+                ->openUrlInNewTab()
+                ->visible(fn (SalesOrder $record) => in_array($record->status, ['draft', 'confirmed'])),
+        ])
+        ->bulkActions([
+            Tables\Actions\BulkActionGroup::make([
+                Tables\Actions\DeleteBulkAction::make(),
+            ]),
+        ]);
+}
 
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ]);
-    }
 
     public static function getRelations(): array
     {

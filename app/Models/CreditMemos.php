@@ -36,18 +36,27 @@ class CreditMemos extends Model
     {
         return $this->belongsTo(SalesOrder::class);
     }
-    
-    
 
-    // Relasi ke Customer
-    // App\Models\CreditMemos.php
+// App\Models\CreditMemos.php
 
-    public function dealer()
-    {
-        return $this->belongsTo(\App\Models\OutletDealer::class, 'customer_id', 'outlet_code');
-    }
+public function outlet()
+{
+    // customer_id pada credit_memos berisi outlet_code (string)
+    return $this->belongsTo(\App\Models\Outlet::class, 'customer_id', 'outlet_code');
+}
+
+// Helper accessor biar gampang dipakai di resource / email
+public function getDealerNameAttribute(): ?string
+{
+    return optional($this->outlet->dealer)->dealer_name;
+}
+
+public function getDealerEmailAttribute(): ?string
+{
+    return optional($this->outlet->dealer)->email;
+}
+
     
-
     // Relasi ke Product Return
     public function productReturn()
     {
