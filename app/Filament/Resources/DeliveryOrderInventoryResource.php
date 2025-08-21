@@ -40,13 +40,24 @@ class DeliveryOrderInventoryResource extends Resource
         return 'Delivery Orders Inventory';
     }
 
+    // --- FUNGSI HELPER UNTUK CEK STOK (DENGAN LOGIKA BARU) ---
     public static function isStockSufficient(DeliveryOrderInventory $record): bool
     {
         $record->load('items.part');
 
         foreach ($record->items as $item) {
             $inventory = Inventory::where('product_id', $item->part_number)->first();
-            $effectiveStock = ($inventory->quantity_available ?? 0) - ($inventory->quantity_reserved ?? 0);
+            
+            // --- PERBAIKAN LOGIKA 1: Menghitung stok efektif ---
+            // Stok yang sudah direservasi untuk order INI tidak dihitung sebagai pengurang.
+            $reservationForThisOrder = StockReservation::where('sales_order_id', $record->sales_order_id)
+                ->where('part_number', $item->part_number)
+                ->where('status', 'ACTIVE')
+                ->sum('reserved_quantity');
+
+            $otherReservations = ($inventory->quantity_reserved ?? 0) - $reservationForThisOrder;
+            $effectiveStock = ($inventory->quantity_available ?? 0) - $otherReservations;
+            // --- AKHIR PERBAIKAN ---
 
             if (!$inventory || $effectiveStock < $item->quantity) {
                 return false;
@@ -100,7 +111,7 @@ class DeliveryOrderInventoryResource extends Resource
                     ->modalWidth('3xl')->modalSubmitAction(false)->modalCancelActionLabel('Close'),
 
                 Action::make('check_availability')
-                    ->label('Check Availability')
+                    ->label('Process') // <-- NAMA TOMBOL DIGANTI
                     ->icon('heroicon-o-magnifying-glass')
                     ->color('info')
                     ->action(function (DeliveryOrderInventory $record) {
@@ -109,7 +120,16 @@ class DeliveryOrderInventoryResource extends Resource
 
                         foreach ($record->items as $item) {
                             $inventory = Inventory::where('product_id', $item->part_number)->first();
-                            $effectiveStock = ($inventory->quantity_available ?? 0) - ($inventory->quantity_reserved ?? 0);
+                            
+                            // --- PERBAIKAN LOGIKA 2: Menghitung stok efektif di sini juga ---
+                            $reservationForThisOrder = StockReservation::where('sales_order_id', $record->sales_order_id)
+                                ->where('part_number', $item->part_number)
+                                ->where('status', 'ACTIVE')
+                                ->sum('reserved_quantity');
+                            
+                            $otherReservations = ($inventory->quantity_reserved ?? 0) - $reservationForThisOrder;
+                            $effectiveStock = ($inventory->quantity_available ?? 0) - $otherReservations;
+                            // --- AKHIR PERBAIKAN ---
 
                             if (!$inventory || $effectiveStock < $item->quantity) {
                                 $insufficientItems[] = [
@@ -237,8 +257,7 @@ class DeliveryOrderInventoryResource extends Resource
                     })
                     ->visible(fn(DeliveryOrderInventory $record) => in_array($record->status, ['pending', 'ready'])),
             ])
-            // --- PERUBAHAN DI SINI ---
-            ->defaultSort('created_at', 'desc'); 
+            ->defaultSort('created_at', 'desc');
     }
 
     public static function getRelations(): array

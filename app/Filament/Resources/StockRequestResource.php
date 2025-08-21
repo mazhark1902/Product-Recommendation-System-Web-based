@@ -17,6 +17,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+
 class StockRequestResource extends Resource implements HasShieldPermissions
 {
     protected static ?string $model = StockRequest::class;
@@ -41,6 +44,21 @@ class StockRequestResource extends Resource implements HasShieldPermissions
                         Forms\Components\Select::make('warehouse_id')
                             ->relationship('warehouse', 'name')
                             ->label('Destination Warehouse')
+                            ->required(),
+
+                         Select::make('source_type')
+                            ->label('Source of Goods')
+                            ->options([
+                                'VENDOR' => 'Vendor (Pembelian)',
+                                'WAREHOUSE_TRANSFER' => 'Warehouse Transfer (Pindahan)',
+                                'PRODUCTION' => 'Production Output (Hasil Produksi)',
+                                'ADJUSTMENT' => 'Stock Adjustment (Penyesuaian)',
+                            ])
+                            ->required(),
+
+                        TextInput::make('source_reference')
+                            ->label('Source Reference (PO/TO/Doc No.)')
+                            ->helperText('Contoh: PO-12345 atau TO-WH1-WH2-001')
                             ->required(),
 
                         Forms\Components\Select::make('user_id')

@@ -64,6 +64,7 @@ class InventoryResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('subPart.sub_part_name')->label('Sub Part Name')->searchable()->sortable()->placeholder('N/A'),
                 Tables\Columns\TextColumn::make('product_id')->label('Sub Part Code')->searchable(),
+                Tables\Columns\TextColumn::make('warehouse.name')->label('Warehouse')->searchable()->sortable(), // <-- GANTI DENGAN INI
                 Tables\Columns\TextColumn::make('quantity_available')
                     ->label('Available Stock')
                     ->numeric()
@@ -73,7 +74,6 @@ class InventoryResource extends Resource
                 Tables\Columns\TextColumn::make('minimum_stock')->label('Min. Stock')->numeric()->sortable(),
                 Tables\Columns\TextColumn::make('quantity_reserved')->label('Reserved')->numeric()->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('quantity_damaged')->label('Damaged')->numeric()->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('location')->label('Location')->searchable()->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('updated_at')->label('Last Updated')->dateTime()->sortable(),
             ])
             ->filters([
